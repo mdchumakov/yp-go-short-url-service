@@ -10,7 +10,6 @@ import (
 	"yp-go-short-url-service/internal/service"
 )
 
-const targetContentType string = "text/plain"
 const maxBodySize int64 = 1024 * 1024 // 1 MB
 
 type CreatingShortLinks struct {
@@ -27,10 +26,6 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 
 	if contentType == "" {
 		c.String(http.StatusBadRequest, "Отсутствует Content-Type")
-		return
-	}
-	if !(contentType == targetContentType) {
-		c.String(http.StatusBadRequest, "Неподдерживаемый Content-Type `%s`", contentType)
 		return
 	}
 
