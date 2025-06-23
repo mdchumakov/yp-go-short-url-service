@@ -13,6 +13,7 @@ type ServerSettings struct {
 	ServerHost   string `envconfig:"SERVER_HOST" default:"localhost" required:"true"`
 	ServerPort   int    `envconfig:"SERVER_PORT" default:"8080" required:"true"`
 	ServerDomain string `envconfig:"SERVER_DOMAIN" default:"localhost" required:"true"`
+	RedirectURL  string `envconfig:"REDIRECT_URL" default:"" required:"false"`
 }
 
 type SQLiteSettings struct {

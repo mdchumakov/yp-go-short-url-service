@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"yp-go-short-url-service/internal/model"
 )
@@ -27,7 +26,6 @@ func (s *linkShortenerService) ShortenURL(longURL string) (string, error) {
 	}
 
 	shortURL := shortenURLBase62(longURL)
-	fmt.Println(shortURL)
 
 	s.db.First(&urlModel, "short_url = ?", shortURL)
 	if urlModel.ID != 0 {

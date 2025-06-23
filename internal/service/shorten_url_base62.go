@@ -2,7 +2,6 @@ package service
 
 import (
 	"crypto/md5"
-	"fmt"
 	"math/big"
 )
 
@@ -14,9 +13,9 @@ func shortenURLBase62(longURL string) string {
 	hash := md5.Sum([]byte(longURL))
 
 	num := new(big.Int)
-	fmt.Println("Hash:", hash)
+
 	num.SetBytes(hash[:hashSize])
-	fmt.Println("BigInt:", num)
+
 	shortURL := toBase62(num)
 	return shortURL[:shortURLSize]
 }

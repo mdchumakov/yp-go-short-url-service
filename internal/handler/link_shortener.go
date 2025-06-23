@@ -52,6 +52,16 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 }
 
 func (h *CreatingShortLinks) buildShortURL(c *gin.Context, shortedURL string) string {
+	fmt.Println(h.serverSettings)
+
+	if redirectURL := h.serverSettings.RedirectURL; strings.TrimSpace(redirectURL) != "" {
+		return fmt.Sprintf(
+			"%s/%s",
+			strings.TrimRight(redirectURL, "/"),
+			shortedURL,
+		)
+	}
+
 	scheme := "http"
 	host := h.serverSettings.ServerHost
 	port := fmt.Sprintf("%d", h.serverSettings.ServerPort)

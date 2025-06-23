@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"strings"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
@@ -45,8 +46,17 @@ func (a *App) SetupRoutes() {
 	a.router.POST("/", a.shortLinksHandler.Handle)
 }
 
-func (a *App) Run() error {
-	addr := fmt.Sprintf("%s:%d", a.settings.Server.ServerHost, a.settings.Server.ServerPort)
+func (a *App) GetSettings() *config.Settings {
+	return a.settings
+}
+
+func (a *App) Run(connectionAddr *string) error {
+	var addr string
+	if strings.TrimSpace(*connectionAddr) != "" {
+		addr = fmt.Sprintf(*connectionAddr)
+	} else {
+		addr = fmt.Sprintf("%s:%d", a.settings.Server.ServerHost, a.settings.Server.ServerPort)
+	}
 	fmt.Println(a.settings.Server.ServerHost)
 	return a.router.Run(addr)
 }

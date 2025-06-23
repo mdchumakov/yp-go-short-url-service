@@ -2,14 +2,15 @@ package handler
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"yp-go-short-url-service/internal/config"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 // Мок для сервиса сокращения ссылок
@@ -70,7 +71,7 @@ func TestCreatingShortLinks_Handle_BodyReadError(t *testing.T) {
 
 type errReader struct{}
 
-func (e *errReader) Read(p []byte) (n int, err error) {
+func (e *errReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("read error")
 }
 
