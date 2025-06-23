@@ -31,20 +31,25 @@ func (s *linkShortenerService) ShortenURL(longURL string) (string, error) {
 
 	s.db.First(&urlModel, "short_url = ?", shortURL)
 	if urlModel.ID != 0 {
-		resolveConflicts(s.db, &shortURL)
+		s.resolveConflicts(&shortURL)
 	}
 
 	s.db.Create(&model.URL{ShortURL: shortURL, LongURL: longURL})
 	return shortURL, nil
 }
 
-func resolveConflicts(db *gorm.DB, shortURL *string) {
-	var urlModel model.URL
+func (s *linkShortenerService) resolveConflicts(shortURL *string) {
+	var count int
+
 	for {
-		db.First(&urlModel, "short_url = ?", shortURL)
-		if urlModel.ID == 0 {
+		var urlModel model.URL
+
+		s.db.First(&urlModel, "short_url = ?", *shortURL)
+		if urlModel.ID == 0 || count >= 10 {
 			break
 		}
 		*shortURL = shortenURLBase62(*shortURL + "1")
+
+		count++
 	}
 }
