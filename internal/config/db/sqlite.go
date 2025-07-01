@@ -7,6 +7,10 @@ import (
 	"yp-go-short-url-service/internal/model"
 )
 
+type SQLiteSettings struct {
+	SQLiteDBPath string `envconfig:"SQLITE_DB_PATH" default:"db/test.db" required:"true"`
+}
+
 func InitSQLiteDB(dbPath string) (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {

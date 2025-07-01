@@ -1,9 +1,7 @@
 package app
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"strings"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
@@ -21,13 +19,13 @@ type App struct {
 func NewApp() *App {
 	router := gin.Default()
 	settings := config.NewSettings()
-	sqliteDB, err := db.InitSQLiteDB(settings.SQLite.SQLiteDBPath)
+	sqliteDB, err := db.InitSQLiteDB(settings.EnvSettings.SQLite.SQLiteDBPath)
 	if err != nil {
 		panic("Failed to connect to the database: " + err.Error())
 	}
 
 	linkShortenerService := service.NewLinkShortenerService(sqliteDB)
-	handlerForCreatingShortLinks := handler.NewCreatingShortLinks(linkShortenerService, settings.Server)
+	handlerForCreatingShortLinks := handler.NewCreatingShortLinksHandler(linkShortenerService, settings)
 	handlerForExtractingFullLink := handler.NewExtractingFullLink(sqliteDB)
 	handlerHealth := handler.NewHealthCheck()
 
@@ -46,17 +44,6 @@ func (a *App) SetupRoutes() {
 	a.router.POST("/", a.shortLinksHandler.Handle)
 }
 
-func (a *App) GetSettings() *config.Settings {
-	return a.settings
-}
-
-func (a *App) Run(connectionAddr *string) error {
-	var addr string
-	if strings.TrimSpace(*connectionAddr) != "" {
-		addr = fmt.Sprintf(*connectionAddr)
-	} else {
-		addr = fmt.Sprintf("%s:%d", a.settings.Server.ServerHost, a.settings.Server.ServerPort)
-	}
-	fmt.Println(a.settings.Server.ServerHost)
-	return a.router.Run(addr)
+func (a *App) Run() error {
+	return a.router.Run(a.settings.GetServerAddress())
 }
