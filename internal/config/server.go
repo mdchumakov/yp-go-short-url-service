@@ -12,4 +12,5 @@ type ServerSettings struct {
 	ServerPort    int    `envconfig:"SERVER_PORT" default:"0" required:"false"`
 	ServerDomain  string `envconfig:"SERVER_DOMAIN" default:"localhost" required:"true"`
 	BaseURL       string `envconfig:"BASE_URL" default:"" required:"false"`
+	Environment   string `envconfig:"ENVIRONMENT" default:"development" required:"false"`
 }
