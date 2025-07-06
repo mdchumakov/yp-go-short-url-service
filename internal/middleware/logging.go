@@ -3,25 +3,32 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"time"
 )
 
 func LoggerMiddleware(log *zap.SugaredLogger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Log the request details
+		timeStart := time.Now()
+
+		// Сведения о запросах должны содержать URL, метод запроса.
 		log.Infow("Request received",
 			"method", c.Request.Method,
 			"path", c.Request.URL.Path,
 			"query", c.Request.URL.RawQuery,
-			"remote_addr", c.Request.RemoteAddr,
+			"remoteAddr", c.Request.RemoteAddr,
 		)
 
-		// Process the request
 		c.Next()
 
-		// Log the response status
+		duration := time.Since(timeStart)
+
+		// Сведения об ответах должны содержать код статуса,
+		// размер содержимого ответа и время, затраченное на его выполнение.
 		log.Infow("Response sent",
 			"status", c.Writer.Status(),
 			"path", c.Request.URL.Path,
+			"duration", duration,
+			"byteSize", c.Writer.Size(),
 		)
 	}
 }

@@ -33,3 +33,11 @@ func NewDevLogger() (*zap.SugaredLogger, error) {
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 	return logger.Sugar(), nil
 }
+
+func SyncLogger(logger *zap.SugaredLogger) {
+	if logger != nil {
+		if err := logger.Sync(); err != nil {
+			logger.Fatal("Failed to sync logger", "error", err)
+		}
+	}
+}

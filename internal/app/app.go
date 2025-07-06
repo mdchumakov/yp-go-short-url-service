@@ -19,20 +19,19 @@ type App struct {
 	logger            *zap.SugaredLogger
 }
 
-func NewApp() *App {
-	router := gin.New()
+func NewApp(logger *zap.SugaredLogger) *App {
+	router := gin.Default()
 	settings := config.NewSettings()
-	log, _ := config.NewLogger(settings.EnvSettings.Server.Environment == "prod")
 
 	sqliteDB, err := db.InitSQLiteDB(settings.EnvSettings.SQLite.SQLiteDBPath)
 	if err != nil {
-		panic("Failed to connect to the database: " + err.Error())
+		logger.Fatal(err)
 	}
 
 	linkShortenerService := service.NewLinkShortenerService(sqliteDB)
 	handlerForCreatingShortLinks := handler.NewCreatingShortLinksHandler(linkShortenerService, settings)
 	handlerForExtractingFullLink := handler.NewExtractingFullLink(sqliteDB)
-	handlerHealth := handler.NewHealthCheck()
+	handlerHealth := handler.NewHealthCheck(logger)
 
 	return &App{
 		router:            router,
@@ -40,8 +39,12 @@ func NewApp() *App {
 		fullLinkHandler:   handlerForExtractingFullLink,
 		pingHandler:       handlerHealth,
 		settings:          settings,
-		logger:            log,
+		logger:            logger,
 	}
+}
+
+func (a *App) SetupMiddlewares() {
+	a.router.Use(middleware.LoggerMiddleware(a.logger))
 }
 
 func (a *App) SetupRoutes() {
@@ -51,11 +54,6 @@ func (a *App) SetupRoutes() {
 }
 
 func (a *App) Run() error {
-	a.logger.Info("Starting server ", zap.String("address", a.settings.GetServerAddress()))
-	a.router.Use(middleware.LoggerMiddleware(a.logger))
 	err := a.router.Run(a.settings.GetServerAddress())
-
-	a.logger.Info("Server started", zap.String("address", a.settings.GetServerAddress()))
-
 	return err
 }
