@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"yp-go-short-url-service/internal/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -14,8 +15,10 @@ func TestHealthCheck_Handle(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	r := gin.New()
+	logger, _ := config.NewLogger(false)
+	defer config.SyncLogger(logger)
 
-	healthHandler := NewHealthCheck()
+	healthHandler := NewHealthCheck(logger)
 
 	r.GET("/ping", healthHandler.Handle)
 

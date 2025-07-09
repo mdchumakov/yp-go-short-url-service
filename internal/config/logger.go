@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
+	"strings"
 )
 
 func NewLogger(isProd bool) (*zap.SugaredLogger, error) {
@@ -37,7 +38,9 @@ func NewDevLogger() (*zap.SugaredLogger, error) {
 func SyncLogger(logger *zap.SugaredLogger) {
 	if logger != nil {
 		if err := logger.Sync(); err != nil {
-			logger.Fatal("Failed to sync logger", "error", err)
+			if !strings.Contains(err.Error(), "bad file descriptor") {
+				logger.Error("Failed to sync logger", "error", err)
+			}
 		}
 	}
 }

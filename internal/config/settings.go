@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
-	"log"
 	"strings"
 	"yp-go-short-url-service/internal/config/db"
 )
@@ -45,7 +44,6 @@ func (s *Settings) GetServerAddress() string {
 	}
 	if strings.TrimSpace(s.EnvSettings.Server.ServerHost) != "" &&
 		s.EnvSettings.Server.ServerPort != 0 {
-		log.Println("Используем env %s", s.EnvSettings.Server.ServerHost)
 		return fmt.Sprintf(
 			"%s:%d",
 			s.EnvSettings.Server.ServerHost,
@@ -55,7 +53,6 @@ func (s *Settings) GetServerAddress() string {
 
 	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
 	if serverAddr := strings.TrimSpace(s.Flags.ServerAddress); serverAddr != "" {
-		log.Println("Используем флаги %s", serverAddr)
 		return serverAddr
 	}
 
@@ -70,13 +67,11 @@ func (s *Settings) GetServerAddress() string {
 func (s *Settings) GetBaseURL() string {
 	// Если указана переменная окружения, то используется она
 	if baseURL := strings.TrimSpace(s.EnvSettings.Server.BaseURL); baseURL != "" {
-		log.Println("Используем env %s", baseURL)
 		return baseURL
 	}
 
 	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
 	if baseURL := strings.TrimSpace(s.Flags.BaseURL); baseURL != "" {
-		log.Println("Используем флаги %s", baseURL)
 		return baseURL
 	}
 

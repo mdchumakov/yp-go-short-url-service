@@ -56,7 +56,6 @@ func TestCreatingShortLinks_Handle_NoContentType(t *testing.T) {
 	r.POST("/shorten", handler.Handle)
 
 	req, _ := http.NewRequest(http.MethodPost, "/shorten", strings.NewReader("https://test.com"))
-	// Не устанавливаем Content-Type
 
 	r.ServeHTTP(w, req)
 
