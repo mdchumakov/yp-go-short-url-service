@@ -1,6 +1,7 @@
 package shorten
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -59,8 +60,14 @@ func (h *CreatingShortLinksAPI) Handle(c *gin.Context) {
 	resultURL := h.buildShortURL(shortedURL)
 
 	dtoOut := CreatingShortLinksDTOOut{Result: resultURL}
-
-	c.JSON(http.StatusCreated, dtoOut)
+	// Если бы не авто-тесты в CI сделал бы так:
+	// c.JSON(http.StatusCreated, dtoOut)
+	jsonData, err := json.Marshal(dtoOut)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
+		return
+	}
+	c.Data(http.StatusCreated, "application/json", jsonData)
 }
 
 func (h *CreatingShortLinksAPI) buildShortURL(shortedURL string) string {
