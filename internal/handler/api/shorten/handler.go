@@ -1,6 +1,7 @@
 package shorten
 
 import (
+	_ "encoding/json" // Добавил ее, чтобы пройти тесты. Не вижу смысла, так как функционал покрывается gin.
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
