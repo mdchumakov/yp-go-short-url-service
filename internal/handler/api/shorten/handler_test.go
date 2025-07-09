@@ -1,6 +1,7 @@
 package shorten
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -141,8 +142,10 @@ func TestCreatingShortLinksAPI_Handle_Success(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 
+	expectedBody := CreatingShortLinksDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
+	expectedBodyJSON, _ := json.Marshal(expectedBody)
+
 	assert.Equal(t, http.StatusCreated, w.Code)
-	resultURL := settings.GetBaseURL() + expectedShortURL
-	assert.Equal(t, `{"result":"`+resultURL+`"}`, w.Body.String())
+	assert.Equal(t, string(expectedBodyJSON), w.Body.String())
 	mockService.AssertExpectations(t)
 }
