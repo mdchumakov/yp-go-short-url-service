@@ -44,7 +44,7 @@ func (h *CreatingShortLinksAPI) Handle(c *gin.Context) {
 		return
 	}
 
-	longURL := strings.TrimSpace(dtoIn.Url)
+	longURL := strings.TrimSpace(dtoIn.URL)
 	if len(longURL) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
 		return
