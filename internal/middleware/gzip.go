@@ -64,10 +64,12 @@ func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
 		return nil
 	}
 
+	log.Debug("decompressing gzip request", "body", c.Request.Body)
 	gz, err := gzip.NewReader(c.Request.Body)
 	if err != nil {
 		return err
 	}
+	log.Debugw("decompressing request", "body", gz)
 	defer func() {
 		if err := gz.Close(); err != nil {
 			log.Errorw("failed to close gzip writer", "error", err)
