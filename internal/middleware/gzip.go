@@ -10,7 +10,6 @@ import (
 type gzipResponseBodyWriter struct {
 	gin.ResponseWriter
 	writer *gzip.Writer
-	logger *zap.SugaredLogger
 }
 
 func (r *gzipResponseBodyWriter) Write(b []byte) (int, error) {
@@ -49,7 +48,6 @@ func GZIPMiddleware(log *zap.SugaredLogger) gin.HandlerFunc {
 		writer := &gzipResponseBodyWriter{
 			ResponseWriter: c.Writer,
 			writer:         gz,
-			logger:         log,
 		}
 		c.Writer = writer
 
