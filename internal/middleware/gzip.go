@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"bytes"
 	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 )
 
@@ -63,8 +65,14 @@ func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
 	if c.Request.Header.Get("Content-Encoding") != "gzip" {
 		return nil
 	}
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Errorw("failed to read request body", "error", err)
+		return err
+	}
+	log.Debug("decompressing gzip request body ", string(body))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	log.Debug("decompressing gzip request", "body", c.Request.Body)
 	gz, err := gzip.NewReader(c.Request.Body)
 	if err != nil {
 		return err
