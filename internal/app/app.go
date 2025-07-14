@@ -50,7 +50,6 @@ func NewApp(logger *zap.SugaredLogger) *App {
 func (a *App) SetupMiddlewares() {
 	a.router.Use(middleware.LoggerMiddleware(a.logger))
 	a.router.Use(middleware.GZIPMiddleware(a.logger))
-	//gzip.DefaultDecompressHandle
 }
 
 func (a *App) SetupRoutes() {
