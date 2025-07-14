@@ -1,4 +1,4 @@
-package middleware
+package gzip
 
 import (
 	"bytes"
@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -54,14 +53,8 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := gin.New()
 
-	logger, _ := zap.NewDevelopment()
-	defer func(logger *zap.Logger) {
-		err := logger.Sync()
-		if err != nil {
-
-		}
-	}(logger)
-	sugar := logger.Sugar()
+	logger, _ := config.NewDevLogger()
+	defer config.SyncLogger(logger)
 
 	expectedShortURL := "abc123"
 	settings := getDefaultSettings()
@@ -69,7 +62,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	mockService := new(MockShortener)
 	handler := shortenAPI.NewCreatingShortLinksAPI(mockService, settings)
 
-	r.Use(GZIPMiddleware(sugar))
+	r.Use(Middleware(logger))
 
 	r.POST(apiPath, handler.Handle)
 

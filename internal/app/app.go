@@ -8,6 +8,7 @@ import (
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/handler/api/shorten"
 	"yp-go-short-url-service/internal/middleware"
+	"yp-go-short-url-service/internal/middleware/gzip"
 	"yp-go-short-url-service/internal/service"
 )
 
@@ -49,7 +50,7 @@ func NewApp(logger *zap.SugaredLogger) *App {
 
 func (a *App) SetupMiddlewares() {
 	a.router.Use(middleware.LoggerMiddleware(a.logger))
-	a.router.Use(middleware.GZIPMiddleware(a.logger))
+	a.router.Use(gzip.Middleware(a.logger))
 }
 
 func (a *App) SetupRoutes() {
