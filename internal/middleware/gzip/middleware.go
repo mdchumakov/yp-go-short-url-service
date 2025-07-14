@@ -43,11 +43,13 @@ func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
 				log.Errorw("failed to close gzip writer", "error", err)
 			}
 		}(gw)
+
 		if err := compressResponse(c, log, gw); err != nil {
 			log.Errorw("failed to compress response", "error", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.Next()
 	}
 }
@@ -80,7 +82,7 @@ func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
 }
 
 func compressResponse(c *gin.Context, log *zap.SugaredLogger, gw *gzip.Writer) error {
-	if contentEncoding := c.Request.Header.Get("Content-Encoding"); contentEncoding != "gzip" {
+	if contentEncoding := c.Request.Header.Get("Accept-Encoding"); !strings.Contains(contentEncoding, "gzip") {
 		log.Warnw("skipping gzip middleware for unsupported content Encoding",
 			"contentEncoding", contentEncoding,
 		)
