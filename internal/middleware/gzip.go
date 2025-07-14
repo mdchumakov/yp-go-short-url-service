@@ -28,8 +28,8 @@ func GZIPMiddleware(log *zap.SugaredLogger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		// Функция сжатия должна работать для контента с типами application/json и text/html.
-		if contentType := c.Request.Header.Get("Content-Type"); !strings.Contains(contentType, "application/json") ||
-			!strings.Contains(contentType, "application/x-gzip") ||
+		if contentType := c.Request.Header.Get("Content-Type"); !strings.Contains(contentType, "application/json") &&
+			!strings.Contains(contentType, "application/x-gzip") &&
 			!strings.Contains(contentType, "text/html") {
 			log.Debugw("skipping gzip middleware for unsupported content type", "contentType", contentType)
 			c.Next()
