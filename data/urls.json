@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "short_url": "1BYWBN",
+    "long_url": "https://practicum.yandex.ru/",
+    "created_at": "2025-06-20 18:44:36.131079+03:00",
+    "updated_at": "2025-06-20 18:44:36.131079+03:00"
+  },
+  {
+    "id": 2,
+    "short_url": "79p2tg",
+    "long_url": "https://practicum.yandex.ru/test",
+    "created_at": "2025-06-20 19:01:53.492697+03:00",
+    "updated_at": "2025-06-20 19:01:53.492697+03:00"
+  },
+  {
+    "id": 3,
+    "short_url": "A4xG4R",
+    "long_url": "https://practicum.yandex.ru/test1",
+    "created_at": "2025-06-20 19:04:42.91848+03:00",
+    "updated_at": "2025-06-20 19:04:42.91848+03:00"
+  },
+  {
+    "id": 4,
+    "short_url": "5QSIr163W5OgR1RUfje49C",
+    "long_url": "https://practicum.yandex.ru/test3",
+    "created_at": "2025-06-20 19:29:42.083854+03:00",
+    "updated_at": "2025-06-20 19:29:42.083854+03:00"
+  },
+  {
+    "id": 5,
+    "short_url": "Hdjj5KzM94O",
+    "long_url": "https://practicum.yandex.ru/test4",
+    "created_at": "2025-06-20 19:31:21.695089+03:00",
+    "updated_at": "2025-06-20 19:31:21.695089+03:00"
+  },
+  {
+    "id": 6,
+    "short_url": "IeDtgwhC",
+    "long_url": "https://practicum.yandex.ru/test5",
+    "created_at": "2025-06-21 00:27:50.637683+03:00",
+    "updated_at": "2025-06-21 00:27:50.637683+03:00"
+  },
+  {
+    "id": 7,
+    "short_url": "5tVTNcfA",
+    "long_url": "https://practicum.yandex.ru/test6",
+    "created_at": "2025-06-21 00:34:58.960242+03:00",
+    "updated_at": "2025-06-21 00:34:58.960242+03:00"
+  },
+  {
+    "id": 8,
+    "short_url": "1wOBCIHu",
+    "long_url": "https://practicum.yandex.ru/test7",
+    "created_at": "2025-06-21 00:35:09.597007+03:00",
+    "updated_at": "2025-06-21 00:35:09.597007+03:00"
+  },
+  {
+    "id": 9,
+    "short_url": "4x7nSNnL",
+    "long_url": "https://practicum.yandex.ru/test8",
+    "created_at": "2025-06-21 00:35:17.69672+03:00",
+    "updated_at": "2025-06-21 00:35:17.69672+03:00"
+  },
+  {
+    "id": 10,
+    "short_url": "N9bDfNn2",
+    "long_url": "https://practicum.yandex.ru/test9",
+    "created_at": "2025-06-21 02:13:58.58646+03:00",
+    "updated_at": "2025-06-21 02:13:58.58646+03:00"
+  },
+  {
+    "id": 11,
+    "short_url": "KmOIbUJH",
+    "long_url": "https://go.dev/",
+    "created_at": "2025-06-23 23:21:53.702577+03:00",
+    "updated_at": "2025-06-23 23:21:53.702577+03:00"
+  },
+  {
+    "id": 12,
+    "short_url": "Ee7Qd8TU",
+    "long_url": "https://www.youtube.com/watch?v=hGwcZQGfiEU",
+    "created_at": "2025-07-01 23:59:59.564475+03:00",
+    "updated_at": "2025-07-01 23:59:59.564475+03:00"
+  },
+  {
+    "id": 14,
+    "short_url": "HEhjYZxK",
+    "long_url": "https://gin-gonic.com/en/docs/examples/jsonp/",
+    "created_at": "2025-07-06 07:42:08.421359+03:00",
+    "updated_at": "2025-07-06 07:42:08.421359+03:00"
+  }
+]
