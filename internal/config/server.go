@@ -2,8 +2,8 @@ package config
 
 const (
 	defaultServerHost = "localhost"
-	defaultServerPort = 8080
-	defaultBaseURL    = "http://localhost:8080/"
+	defaultServerPort = 8000
+	defaultBaseURL    = "http://localhost:8000/"
 )
 
 type ServerSettings struct {
