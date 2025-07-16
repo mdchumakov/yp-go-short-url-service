@@ -5,16 +5,17 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"os"
+	"yp-go-short-url-service/internal/model"
 )
 
 const DefaultFileStoragePath = "data/urls.json"
 
 type URL struct {
-	ID        int    `json:"id"`
-	ShortURL  string `json:"short_url"`
-	LongURL   string `json:"long_url"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID        int    `json:"ID"`
+	ShortURL  string `json:"ShortURL"`
+	LongURL   string `json:"LongURL"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
 }
 
 type FileStorageSettings struct {
@@ -26,17 +27,8 @@ func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Warn("File not found, using default file storage path", zap.String("defaultPath", DefaultFileStoragePath))
-			file, err = os.Open(DefaultFileStoragePath)
-			if err != nil {
-				log.Error("Error opening default file storage", zap.Error(err))
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
 		log.Error("Error opening file", zap.Error(err))
+		return nil, err
 	}
 	defer func(file *os.File) {
 		err := file.Close()
@@ -58,4 +50,29 @@ func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]
 
 	log.Info("Successfully extracted URLs from file storage", zap.Int("count", len(urls)))
 	return urls, nil
+}
+
+func SaveURLSDataToFileStorage(filePath string, urls []model.URL, log *zap.SugaredLogger) error {
+	log.Info("Saving URLs to file storage at ", zap.String("filePath", filePath))
+	file, err := os.Create(filePath)
+	if err != nil {
+		log.Error("Error creating file", zap.Error(err))
+		return err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Error("Error closing file", zap.Error(err))
+		}
+	}(file)
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(urls); err != nil {
+		log.Error("Error encoding URL to JSON", zap.Error(err))
+		return err
+	}
+	log.Debug("Successfully encoded URL to JSON")
+
+	log.Info("Successfully saved URLs to file storage", zap.Int("count", len(urls)))
+	return nil
 }
