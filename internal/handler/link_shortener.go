@@ -13,12 +13,15 @@ import (
 const maxBodySize int64 = 1024 * 1024 // 1 MB
 
 type CreatingShortLinks struct {
-	service        service.LinkShortener
-	serverSettings *config.ServerSettings
+	service service.LinkShortener
+	baseURL string
 }
 
-func NewCreatingShortLinks(service service.LinkShortener, settings *config.ServerSettings) *CreatingShortLinks {
-	return &CreatingShortLinks{service: service, serverSettings: settings}
+func NewCreatingShortLinksHandler(service service.LinkShortener, settings *config.Settings) *CreatingShortLinks {
+	return &CreatingShortLinks{
+		service: service,
+		baseURL: settings.GetBaseURL(),
+	}
 }
 
 func (h *CreatingShortLinks) Handle(c *gin.Context) {
@@ -47,43 +50,14 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 		return
 	}
 
-	resultURL := h.buildShortURL(c, shortedURL)
+	resultURL := h.buildShortURL(shortedURL)
 	c.String(http.StatusCreated, resultURL)
 }
 
-func (h *CreatingShortLinks) buildShortURL(c *gin.Context, shortedURL string) string {
-	fmt.Println(h.serverSettings)
-
-	if redirectURL := h.serverSettings.RedirectURL; strings.TrimSpace(redirectURL) != "" {
-		return fmt.Sprintf(
-			"%s/%s",
-			strings.TrimRight(redirectURL, "/"),
-			shortedURL,
-		)
-	}
-
-	scheme := "http"
-	host := h.serverSettings.ServerHost
-	port := fmt.Sprintf("%d", h.serverSettings.ServerPort)
-	if c.Request.TLS != nil {
-		scheme = "https"
-		host = h.serverSettings.ServerDomain
-		port = ""
-
-		return fmt.Sprintf(
-			"%s://%s/%s",
-			scheme,
-			host,
-			shortedURL,
-		)
-	}
-
+func (h *CreatingShortLinks) buildShortURL(shortedURL string) string {
 	return fmt.Sprintf(
-		"%s://%s:%s/%s",
-		scheme,
-		host,
-		port,
+		"%s/%s",
+		strings.TrimRight(h.baseURL, "/"),
 		shortedURL,
 	)
-
 }
