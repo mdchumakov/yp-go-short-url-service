@@ -26,6 +26,16 @@ func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]
 
 	file, err := os.Open(filePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			log.Warn("File not found, using default file storage path", zap.String("defaultPath", DefaultFileStoragePath))
+			file, err = os.Open(DefaultFileStoragePath)
+			if err != nil {
+				log.Error("Error opening default file storage", zap.Error(err))
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 		log.Error("Error opening file", zap.Error(err))
 	}
 	defer func(file *os.File) {
