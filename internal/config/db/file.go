@@ -22,6 +22,8 @@ type FileStorageSettings struct {
 }
 
 func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]URL, error) {
+	log.Info("Extracting URLs from file storage at ", zap.String("filePath", filePath))
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Error("Error opening file", zap.Error(err))
