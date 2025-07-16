@@ -3,8 +3,9 @@ package config
 import "flag"
 
 type Flags struct {
-	ServerAddress string
-	BaseURL       string
+	ServerAddress   string
+	BaseURL         string
+	FileStoragePath string
 }
 
 func NewFlags() *Flags {
@@ -20,10 +21,18 @@ func NewFlags() *Flags {
 			"(значение: адрес сервера перед коротким URL, например, http://localhost:8000/qsd54gFg).",
 	)
 
+	fileStoragePath := flag.String(
+		"f",
+		"",
+		"Путь до файла, куда сохраняются данные в формате JSON. "+
+			"Имя файла для значения по умолчанию придумайте сами.",
+	)
+
 	flag.Parse()
 
 	return &Flags{
-		ServerAddress: *connectionAddr,
-		BaseURL:       *redirectURL,
+		ServerAddress:   *connectionAddr,
+		BaseURL:         *redirectURL,
+		FileStoragePath: *fileStoragePath,
 	}
 }

@@ -26,7 +26,11 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	router := gin.Default()
 	settings := config.NewSettings()
 
-	sqliteDB, err := db.InitSQLiteDB(settings.EnvSettings.SQLite.SQLiteDBPath)
+	sqliteDB, err := db.SetupDB(
+		settings.EnvSettings.SQLite.SQLiteDBPath,
+		settings.GetFileStoragePath(),
+		logger,
+	)
 	if err != nil {
 		logger.Fatal(err)
 	}

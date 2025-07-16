@@ -13,8 +13,9 @@ type Settings struct {
 }
 
 type ENVSettings struct {
-	Server *ServerSettings
-	SQLite *db.SQLiteSettings
+	Server      *ServerSettings
+	SQLite      *db.SQLiteSettings
+	FileStorage *db.FileStorageSettings
 }
 
 func NewSettings() *Settings {
@@ -77,4 +78,19 @@ func (s *Settings) GetBaseURL() string {
 
 	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
 	return defaultBaseURL
+}
+
+func (s *Settings) GetFileStoragePath() string {
+	// Если указана переменная окружения, то используется она
+	if fileStoragePath := strings.TrimSpace(s.EnvSettings.FileStorage.Path); fileStoragePath != "" {
+		return fileStoragePath
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if fileStoragePath := strings.TrimSpace(s.Flags.FileStoragePath); fileStoragePath != "" {
+		return fileStoragePath
+	}
+
+	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
+	return db.DefaultFileStoragePath
 }
