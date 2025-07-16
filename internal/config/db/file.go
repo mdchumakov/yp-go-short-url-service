@@ -23,6 +23,29 @@ type FileStorageSettings struct {
 
 func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]URL, error) {
 	log.Info("Extracting URLs from file storage at ", zap.String("filePath", filePath))
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		log.Error("Error getting file info", zap.Error(err))
+		return nil, err
+	}
+	if fileInfo.IsDir() {
+		log.Error("File storage path is a directory", zap.String("path", filePath))
+		files, err := os.ReadDir(filePath)
+		if err != nil {
+			log.Error("Error reading directory", zap.Error(err))
+			return nil, err
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				log.Warn("Skipping directory in file storage", zap.String("directory", file.Name()))
+				continue
+			}
+			filePath = filePath + "/" + file.Name()
+			log.Info("Using file from directory", zap.String("filePath", filePath))
+			break
+		}
+		return nil, err
+	}
 
 	file, err := os.Open(filePath)
 	if err != nil {
