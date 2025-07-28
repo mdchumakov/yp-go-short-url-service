@@ -1,39 +1,25 @@
 package main
 
 import (
-	"flag"
-	"strings"
 	"yp-go-short-url-service/internal/app"
+	"yp-go-short-url-service/internal/config"
 )
 
-func init() {
-
-}
-
 func main() {
-	service := app.NewApp()
-	settings := service.GetSettings()
+	logger, err := config.NewLogger(false)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer config.SyncLogger(logger)
 
+	service := app.NewApp(logger)
+
+	service.SetupMiddlewares()
 	service.SetupRoutes()
 
-	connectionAddr := flag.String(
-		"a",
-		"",
-		"Отвечает за адрес запуска HTTP-сервера (значение может быть таким: localhost:8888)",
-	)
-	redirectURL := flag.String(
-		"b",
-		"",
-		"Отвечает за адрес запуска HTTP-сервера (значение может быть таким: localhost:8888)",
-	)
-	flag.Parse()
-
-	if strings.TrimSpace(*redirectURL) != "" {
-		settings.Server.RedirectURL = *redirectURL
-	}
-	err := service.Run(connectionAddr)
+	err = service.Run()
 
 	if err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
 }

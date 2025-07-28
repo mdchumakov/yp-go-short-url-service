@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"yp-go-short-url-service/internal/config"
+	"yp-go-short-url-service/internal/middleware"
+	"yp-go-short-url-service/internal/middleware/gzip"
 )
 
 func TestHealthCheck_Handle(t *testing.T) {
@@ -14,8 +16,13 @@ func TestHealthCheck_Handle(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	r := gin.New()
+	logger, _ := config.NewLogger(false)
+	defer config.SyncLogger(logger)
 
-	healthHandler := NewHealthCheck()
+	healthHandler := NewHealthCheck(logger)
+
+	r.Use(middleware.LoggerMiddleware(logger))
+	r.Use(gzip.Middleware(logger))
 
 	r.GET("/ping", healthHandler.Handle)
 
