@@ -5,7 +5,6 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"os"
-	"yp-go-short-url-service/internal/model"
 )
 
 const DefaultFileStoragePath = "data/urls.json"
@@ -52,7 +51,7 @@ func ExtractURLSDataFromFileStorage(filePath string, log *zap.SugaredLogger) ([]
 	return urls, nil
 }
 
-func SaveURLSDataToFileStorage(filePath string, urls []model.URL, log *zap.SugaredLogger) error {
+func SaveURLSDataToFileStorage(filePath string, urls []interface{}, log *zap.SugaredLogger) error {
 	log.Info("Saving URLs to file storage at ", zap.String("filePath", filePath))
 	file, err := os.Create(filePath)
 	if err != nil {

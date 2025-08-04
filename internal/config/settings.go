@@ -14,7 +14,7 @@ type Settings struct {
 
 type ENVSettings struct {
 	Server      *ServerSettings
-	SQLite      *db.SQLiteSettings
+	PG          *db.PGSettings
 	FileStorage *db.FileStorageSettings
 }
 
@@ -93,4 +93,19 @@ func (s *Settings) GetFileStoragePath() string {
 
 	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
 	return db.DefaultFileStoragePath
+}
+
+func (s *Settings) GetDatabaseDSN() string {
+	// Если указана переменная окружения, то используется она
+	if dsn := strings.TrimSpace(s.EnvSettings.PG.DSN); dsn != "" {
+		return dsn
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if dsn := strings.TrimSpace(s.Flags.DatabaseDSN); dsn != "" {
+		return dsn
+	}
+
+	// Если нет ни переменной окружения, ни флага, то возвращается пустая строка
+	return db.DefaultPGDSN
 }

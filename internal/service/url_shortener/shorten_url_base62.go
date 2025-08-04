@@ -1,4 +1,4 @@
-package service
+package url_shortener
 
 import (
 	"crypto/md5"

@@ -1,7 +1,8 @@
-package handler
+package url_extractor
 
 import (
 	"net/http"
+	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
 
@@ -12,7 +13,7 @@ type ExtractingLongURLHandler struct {
 	service service.LinkExtractorService
 }
 
-func NewExtractingFullLinkHandler(service service.LinkExtractorService) Handler {
+func NewExtractingFullLinkHandler(service service.LinkExtractorService) handler.Handler {
 	return &ExtractingLongURLHandler{
 		service: service,
 	}

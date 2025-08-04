@@ -3,36 +3,70 @@ package shorten
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 	"yp-go-short-url-service/internal/config"
+	"yp-go-short-url-service/internal/handler"
+	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
-type CreatingShortLinksAPI struct {
-	service service.LinkShortener
+type creatingShortLinksAPIHandler struct {
+	service service.LinkShortenerService
 	baseURL string
 }
 
-func NewCreatingShortLinksAPI(service service.LinkShortener, settings *config.Settings) *CreatingShortLinksAPI {
-	return &CreatingShortLinksAPI{
+func NewCreatingShortLinksAPIHandler(
+	service service.LinkShortenerService,
+	settings *config.Settings,
+) handler.Handler {
+	return &creatingShortLinksAPIHandler{
 		service: service,
 		baseURL: settings.GetBaseURL(),
 	}
 }
 
-func (h *CreatingShortLinksAPI) Handle(c *gin.Context) {
+// Handle CreateShortURL godoc
+// @Summary Создать короткую ссылку
+// @Description Создает короткую ссылку из длинного URL
+// @Tags shortener
+// @Accept json
+// @Produce json
+// @Param request body CreatingShortLinksDTOIn true "Данные для создания короткой ссылки"
+// @Success 201 {object} CreatingShortLinksDTOOut "Короткая ссылка успешно создана"
+// @Failure 400 {object} map[string]interface{} "Неверный запрос"
+// @Failure 415 {object} map[string]interface{} "Неподдерживаемый тип контента"
+// @Failure 500 {object} map[string]interface{} "Внутренняя ошибка сервера"
+// @Router /api/shorten [post]
+func (h *creatingShortLinksAPIHandler) Handle(c *gin.Context) {
+	logger := middleware.GetLogger(c.Request.Context())
+	requestID := middleware.ExtractRequestID(c)
+
+	logger.Infow("Received shorten URL request",
+		"method", c.Request.Method,
+		"path", c.Request.URL.Path,
+		"remote_addr", c.Request.RemoteAddr,
+		"request_id", requestID)
+
 	var dtoIn CreatingShortLinksDTOIn
 
 	contentType := c.GetHeader("Content-Type")
 
 	if contentType == "" {
+		logger.Warnw("Missing Content-Type header",
+			"request_id", requestID,
+			"remote_addr", c.Request.RemoteAddr)
 		c.JSON(http.StatusUnsupportedMediaType, gin.H{
 			"message": "Content-type header is required",
 		})
 		return
 	} else if !strings.HasPrefix(contentType, "application/json") {
+		logger.Warnw("Invalid Content-Type header",
+			"content_type", contentType,
+			"request_id", requestID,
+			"remote_addr", c.Request.RemoteAddr)
 		c.JSON(http.StatusUnsupportedMediaType, gin.H{
 			"message": "Content-type: `application/json` header is required",
 		})
@@ -41,36 +75,60 @@ func (h *CreatingShortLinksAPI) Handle(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&dtoIn)
 	if err != nil {
+		logger.Warnw("Invalid JSON in request body",
+			"error", err,
+			"request_id", requestID,
+			"remote_addr", c.Request.RemoteAddr)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
 	longURL := strings.TrimSpace(dtoIn.URL)
 	if len(longURL) == 0 {
+		logger.Warnw("Empty URL in request",
+			"request_id", requestID,
+			"remote_addr", c.Request.RemoteAddr)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
 		return
 	}
 
-	shortedURL, err := h.service.ShortenURL(longURL)
+	logger.Infow("Processing URL shortening request",
+		"long_url", longURL,
+		"request_id", requestID)
+
+	shortedURL, err := h.service.ShortURL(c.Request.Context(), longURL)
 	if err != nil {
+		logger.Errorw("Failed to shorten URL",
+			"error", err,
+			"long_url", longURL,
+			"request_id", requestID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	resultURL := h.buildShortURL(shortedURL)
+	logger.Infow("URL shortened successfully",
+		"long_url", longURL,
+		"short_url", shortedURL,
+		"result_url", resultURL,
+		"request_id", requestID)
 
 	dtoOut := CreatingShortLinksDTOOut{Result: resultURL}
 	// Если бы не авто-тесты в CI сделал бы так:
 	// c.JSON(http.StatusCreated, dtoOut)
 	jsonData, err := json.Marshal(dtoOut)
 	if err != nil {
+		logger.Errorw("Failed to marshal response",
+			"error", err,
+			"request_id", requestID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
 		return
 	}
+
 	c.Data(http.StatusCreated, "application/json", jsonData)
 }
 
-func (h *CreatingShortLinksAPI) buildShortURL(shortedURL string) string {
+func (h *creatingShortLinksAPIHandler) buildShortURL(shortedURL string) string {
 	return fmt.Sprintf(
 		"%s/%s",
 		strings.TrimRight(h.baseURL, "/"),

@@ -1,7 +1,8 @@
-package handler
+package health
 
 import (
 	"net/http"
+	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
 
@@ -12,7 +13,7 @@ type pingHandler struct {
 	service service.HealthCheckService
 }
 
-func NewPingHandler(service service.HealthCheckService) Handler {
+func NewPingHandler(service service.HealthCheckService) handler.Handler {
 	return &pingHandler{
 		service: service,
 	}
@@ -31,9 +32,9 @@ func (h *pingHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
 	requestID := middleware.ExtractRequestID(c)
 
-	logger.Infow("starting health check", "requestID", requestID)
+	logger.Infow("Starting health check", "requestID", requestID)
 	if err := h.service.Ping(c); err != nil {
-		logger.Errorw("health check failed",
+		logger.Errorw("Health check failed",
 			"error", err,
 			"request_id", requestID,
 		)

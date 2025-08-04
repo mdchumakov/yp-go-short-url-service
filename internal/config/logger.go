@@ -1,11 +1,48 @@
 package config
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"strings"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+var globalLogger *zap.SugaredLogger
+
+// InitGlobalLogger инициализирует глобальный логгер
+func InitGlobalLogger(level string) error {
+	config := zap.NewProductionConfig()
+
+	// Парсим уровень логирования
+	var zapLevel zapcore.Level
+	if err := zapLevel.UnmarshalText([]byte(level)); err != nil {
+		return err
+	}
+	config.Level = zap.NewAtomicLevelAt(zapLevel)
+
+	logger, err := config.Build()
+	if err != nil {
+		return err
+	}
+
+	globalLogger = logger.Sugar()
+	return nil
+}
+
+// GetGlobalLogger возвращает глобальный логгер
+func GetGlobalLogger() *zap.SugaredLogger {
+	if globalLogger == nil {
+		// Возвращаем no-op логгер если глобальный не инициализирован
+		return zap.NewNop().Sugar()
+	}
+	return globalLogger
+}
+
+// SetGlobalLogger устанавливает глобальный логгер (для тестов)
+func SetGlobalLogger(logger *zap.SugaredLogger) {
+	globalLogger = logger
+}
 
 func NewLogger(isProd bool) (*zap.SugaredLogger, error) {
 	if isProd {
