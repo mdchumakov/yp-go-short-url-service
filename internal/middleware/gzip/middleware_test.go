@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,15 +18,6 @@ import (
 )
 
 const apiPath = "/api/shorten"
-
-type MockShortener struct {
-	mock.Mock
-}
-
-func (m *MockShortener) ShortenURL(longURL string) (string, error) {
-	args := m.Called(longURL)
-	return args.String(0), args.Error(1)
-}
 
 func getDefaultSettings() *config.Settings {
 	return &config.Settings{
