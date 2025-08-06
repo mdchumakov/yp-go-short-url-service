@@ -1,4 +1,4 @@
-package url_extractor
+package urlExtractor
 
 import (
 	"context"
