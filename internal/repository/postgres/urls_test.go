@@ -1,10 +1,11 @@
-package repository
+package postgres
 
 import (
 	"context"
 	"errors"
 	"testing"
 	"time"
+	"yp-go-short-url-service/internal/repository"
 
 	"yp-go-short-url-service/internal/model"
 
@@ -284,9 +285,9 @@ func TestURLsRepository_ImplementsInterface(t *testing.T) {
 
 	// Создаем репозиторий напрямую с моком для проверки интерфейса
 	repo := &urlsRepository{pool: mock}
-	var _ URLRepository = repo
-	var _ URLRepositoryReader = repo
-	var _ URLRepositoryWriter = repo
+	var _ repository.URLRepository = repo
+	var _ repository.URLRepositoryReader = repo
+	var _ repository.URLRepositoryWriter = repo
 }
 
 // Тест для конструктора
@@ -316,7 +317,7 @@ func TestIsNotFoundError(t *testing.T) {
 		},
 		{
 			name:     "ErrURLNotFound should return true",
-			err:      ErrURLNotFound,
+			err:      repository.ErrURLNotFound,
 			expected: true,
 		},
 		{
@@ -333,7 +334,7 @@ func TestIsNotFoundError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsNotFoundError(tt.err)
+			result := repository.IsNotFoundError(tt.err)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -347,7 +348,7 @@ func TestIsExistsError(t *testing.T) {
 	}{
 		{
 			name:     "ErrURLExists should return true",
-			err:      ErrURLExists,
+			err:      repository.ErrURLExists,
 			expected: true,
 		},
 		{
@@ -364,7 +365,7 @@ func TestIsExistsError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsExistsError(tt.err)
+			result := repository.IsExistsError(tt.err)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

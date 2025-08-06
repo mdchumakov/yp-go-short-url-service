@@ -1,9 +1,10 @@
-package repository
+package postgres
 
 import (
 	"context"
 	"errors"
 	"yp-go-short-url-service/internal/model"
+	"yp-go-short-url-service/internal/repository"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -20,7 +21,7 @@ type urlsRepository struct {
 	pool PoolInterface
 }
 
-func NewURLsRepository(pool *pgxpool.Pool) URLRepository {
+func NewURLsRepository(pool *pgxpool.Pool) repository.URLRepository {
 	return &urlsRepository{pool: pool}
 }
 

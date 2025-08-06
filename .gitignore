@@ -23,6 +23,3 @@ vendor/
 .idea
 .vscode
 !/internal/repository/urls.go
-
-# Swagger generated files (uncomment if you want to exclude them from git)
-# docs/

@@ -12,15 +12,17 @@ import (
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/middleware/gzip"
 	"yp-go-short-url-service/internal/repository"
+	"yp-go-short-url-service/internal/repository/postgres"
 	health_ "yp-go-short-url-service/internal/service/health"
 	urlExtractor "yp-go-short-url-service/internal/service/url_extractor"
 	urlShortener "yp-go-short-url-service/internal/service/url_shortener"
+
+	_ "yp-go-short-url-service/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
-	_ "yp-go-short-url-service/docs"
 )
 
 type App struct {
@@ -39,19 +41,30 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	router := gin.Default()
 	settings := config.NewSettings()
 
+	// Пытаемся подключиться к PostgreSQL
 	pgPool, err := db.InitPostgresDB(
 		ctx,
 		settings.GetDatabaseDSN(),
 	)
+
+	var repoURLs repository.URLRepository
+	// PostgreSQL доступен, запускаем миграции
+	err = db.RunMigrations(logger, pgPool, "migrations")
 	if err != nil {
-		logger.Fatal(err)
-	}
+		logger.Warnw("PostgreSQL недоступен, переключаемся на SQLite", "error", err)
 
-	if err = db.RunMigrations(logger, pgPool, "./migrations"); err != nil {
-		logger.Fatal("failed to run migrations", "error", err)
-	}
+		// Инициализируем SQLite
+		sqliteDB, err := db.SetupSQLiteDB("db/sqlite.db", logger)
+		if err != nil {
+			logger.Fatalw("не удалось инициализировать SQLite", "error", err)
+		}
 
-	repoURLs := repository.NewURLsRepository(pgPool)
+		repoURLs = db.NewSQLiteRepository(sqliteDB)
+		logger.Info("SQLite успешно инициализирован как fallback")
+	} else {
+		repoURLs = postgres.NewURLsRepository(pgPool)
+		logger.Info("PostgreSQL успешно инициализирован")
+	}
 
 	pingService := health_.NewHealthCheckService(repoURLs)
 	urlShortenerService := urlShortener.NewLinkShortenerService(repoURLs)

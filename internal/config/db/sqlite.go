@@ -1,96 +1,74 @@
 package db
 
-//
-//import (
-//	"errors"
-//	"go.uber.org/zap"
-//	"gorm.io/driver/sqlite"
-//	"gorm.io/gorm"
-//	"strings"
-//	"yp-go-short-url-service/internal/model"
-//
-//	"yp-go-short-url-service/internal/utils"
-//)
-//
-//type SQLiteSettings struct {
-//	SQLiteDBPath string `envconfig:"SQLITE_DB_PATH" default:"db/test.db" required:"true"`
-//}
-//
-//func InitSQLiteDB(dbPath string) (*gorm.DB, error) {
-//	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	err = db.AutoMigrate(interface{})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return db, nil
-//}
-//
-//func SetupDB(dbPath string, fileStoragePath string, log *zap.SugaredLogger) (*gorm.DB, error) {
-//	sqliteDB, err := InitSQLiteDB(dbPath)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if isFileExists := utils.CheckFileExists(fileStoragePath); !isFileExists {
-//		log.Warnf("File storage path %s does not exist, skipping URL insertion", fileStoragePath)
-//		urlFromDB, err := extractURLSDataFromDB(sqliteDB, log)
-//		if err != nil {
-//			log.Error("Error extracting URLs from SQLite DB", zap.Error(err))
-//			return nil, err
-//		}
-//		if err := SaveURLSDataToFileStorage(fileStoragePath, urlFromDB, log); err != nil {
-//			log.Error("Error saving URLs to file storage", zap.Error(err))
-//			return nil, err
-//		}
-//		log.Info("File storage path does not exist, URLs extracted from DB and saved to file storage")
-//	} else {
-//		urlData, err := ExtractURLSDataFromFileStorage(fileStoragePath, log)
-//		if err != nil {
-//			return nil, err
-//		}
-//		if err := loadURLData2DB(sqliteDB, urlData, log); err != nil {
-//			log.Error("Error loading data into SQLite DB", zap.Error(err))
-//			return nil, err
-//		}
-//	}
-//
-//	log.Info("Successfully initialized SQLite DB and inserted URLs from file storage")
-//	return sqliteDB, nil
-//}
-//
-//func extractURLSDataFromDB(db *gorm.DB, log *zap.SugaredLogger) ([]model.URL, error) {
-//	var urls []model.URL
-//	if err := db.Find(&urls).Error; err != nil {
-//		log.Error("Error extracting URLs from SQLite DB", zap.Error(err))
-//		return nil, err
-//	}
-//	log.Infof("Successfully extracted %d URLs from SQLite DB", len(urls))
-//	return urls, nil
-//}
-//
-//func loadURLData2DB(db *gorm.DB, urls []URL, log *zap.SugaredLogger) error {
-//	for _, url := range urls {
-//		if err := db.Create(&url).Error; err != nil {
-//			switch {
-//			case errors.Is(err, gorm.ErrRecordNotFound):
-//				log.Warnf("URL with short URL %s already exists in the database, skipping insertion", url.ShortURL)
-//				continue
-//			case strings.Contains(err.Error(), "UNIQUE constraint"):
-//				log.Warnf("URL with short URL %s already exists", url.ShortURL)
-//				continue
-//			case strings.Contains(err.Error(), "UNIQUE constraint failed"):
-//				log.Warnf("URL with short URL %s already exists in the database, skipping insertion", url.ShortURL)
-//				continue
-//			default:
-//				log.Error("Error inserting URL into SQLite DB", zap.Error(err), zap.String("short_url", url.ShortURL), zap.String("long_url", url.LongURL))
-//				return err
-//			}
-//		}
-//	}
-//	return nil
-//}
+import (
+	"database/sql"
+	"fmt"
+	"yp-go-short-url-service/internal/repository"
+	"yp-go-short-url-service/internal/repository/sqlite"
+
+	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
+)
+
+type SQLiteSettings struct {
+	SQLiteDBPath string `envconfig:"SQLITE_DB_PATH" default:"db/test.db" required:"true"`
+}
+
+// InitSQLiteDB инициализирует соединение с SQLite базой данных
+func InitSQLiteDB(dbPath string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database: %w", err)
+	}
+
+	// Проверяем соединение
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping SQLite database: %w", err)
+	}
+
+	return db, nil
+}
+
+// SetupSQLiteDB настраивает SQLite базу данных и создает таблицы
+func SetupSQLiteDB(dbPath string, log *zap.SugaredLogger) (*sql.DB, error) {
+	db, err := InitSQLiteDB(dbPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Создаем таблицу urls
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS urls (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		short_url TEXT NOT NULL UNIQUE,
+		long_url TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);`
+
+	_, err = db.Exec(createTableSQL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create urls table: %w", err)
+	}
+
+	// Создаем индексы для улучшения производительности
+	indexes := []string{
+		"CREATE INDEX IF NOT EXISTS idx_urls_short_url ON urls(short_url);",
+		"CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls(long_url);",
+	}
+
+	for _, indexSQL := range indexes {
+		_, err = db.Exec(indexSQL)
+		if err != nil {
+			log.Warnf("Failed to create index: %v", err)
+		}
+	}
+
+	log.Info("Successfully initialized SQLite database")
+	return db, nil
+}
+
+// NewSQLiteRepository создает новый экземпляр SQLite репозитория
+func NewSQLiteRepository(db *sql.DB) repository.URLRepository {
+	return sqlite.NewURLsRepository(db)
+}
