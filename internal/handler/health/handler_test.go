@@ -82,7 +82,7 @@ func TestPingHandler_Handle(t *testing.T) {
 			c.Request = c.Request.WithContext(ctx)
 
 			// Устанавливаем Request ID в Gin контексте
-			c.Set(middleware.RequestIDKey, "test-request-id")
+			c.Set(middleware.GinRequestIDKey, "test-request-id")
 
 			// Act
 			handler.Handle(c)
@@ -123,7 +123,7 @@ func TestPingHandler_Handle_WithRequestID(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "custom-request-123")
+		c.Set(middleware.GinRequestIDKey, "custom-request-123")
 
 		// Act
 		handler.Handle(c)
@@ -206,7 +206,7 @@ func TestPingHandler_Handle_ServiceIntegration(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 
 		// Act
 		handler.Handle(c)
@@ -267,7 +267,7 @@ func TestPingHandler_Handle_EdgeCases(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 
 		// Act
 		handler.Handle(c)

@@ -123,7 +123,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 			c.Request = c.Request.WithContext(ctx)
 
 			// Устанавливаем Request ID в Gin контексте
-			c.Set(middleware.RequestIDKey, "test-request-id")
+			c.Set(middleware.GinRequestIDKey, "test-request-id")
 
 			// Устанавливаем параметр shortURL
 			if tt.shortURL != "" {
@@ -176,7 +176,7 @@ func TestExtractingLongURLHandler_Handle_WithRequestID(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "custom-request-123")
+		c.Set(middleware.GinRequestIDKey, "custom-request-123")
 		c.Params = gin.Params{gin.Param{Key: "shortURL", Value: "custom123"}}
 
 		// Act
@@ -264,7 +264,7 @@ func TestExtractingLongURLHandler_Handle_ServiceIntegration(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 		c.Params = gin.Params{gin.Param{Key: "shortURL", Value: "test123"}}
 
 		// Act
@@ -327,7 +327,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 		c.Params = gin.Params{gin.Param{Key: "shortURL", Value: longShortURL}}
 
 		// Act
@@ -363,7 +363,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 		c.Params = gin.Params{gin.Param{Key: "shortURL", Value: "special-123_456"}}
 
 		// Act
@@ -399,7 +399,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		c.Request = c.Request.WithContext(ctx)
 
 		// Устанавливаем Request ID в Gin контексте
-		c.Set(middleware.RequestIDKey, "test-request-id")
+		c.Set(middleware.GinRequestIDKey, "test-request-id")
 		c.Params = gin.Params{gin.Param{Key: "shortURL", Value: "timeout"}}
 
 		// Act

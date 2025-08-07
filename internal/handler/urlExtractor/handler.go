@@ -32,7 +32,7 @@ func NewExtractingFullLinkHandler(service service.LinkExtractorService) handler.
 // @Router /{shortURL} [get]
 func (h *ExtractingLongURLHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
-	requestID := middleware.ExtractRequestID(c)
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	shortURL := c.Param("shortURL")
 	if shortURL == "" {

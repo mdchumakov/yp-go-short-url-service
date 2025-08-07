@@ -43,7 +43,7 @@ func NewCreatingShortLinksHandler(
 // @Router / [post]
 func (h *CreatingShortLinks) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
-	requestID := middleware.ExtractRequestID(c)
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	contentType := c.GetHeader("Content-Type")
 

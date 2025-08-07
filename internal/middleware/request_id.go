@@ -8,8 +8,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const RequestIDKey = "request_id"
+// RequestIDKeyType - пользовательский тип для ключа Request ID в контексте
+type RequestIDKeyType struct{}
+
+// RequestIDKey - ключ для хранения Request ID в контексте
+var RequestIDKey = RequestIDKeyType{}
+
 const RequestIDHeader = "X-Request-ID"
+const GinRequestIDKey = "request_id"
 
 // RequestIDMiddleware добавляет уникальный ID к каждому запросу для трассировки
 func RequestIDMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
@@ -21,7 +27,11 @@ func RequestIDMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
 		}
 
 		// Добавляем Request ID в контекст Gin
-		c.Set(RequestIDKey, requestID)
+		c.Set(GinRequestIDKey, requestID)
+
+		// Добавляем Request ID в обычный контекст для функции ExtractRequestID
+		ctx := context.WithValue(c.Request.Context(), RequestIDKey, requestID)
+		c.Request = c.Request.WithContext(ctx)
 
 		// Добавляем Request ID в заголовки ответа для клиента
 		c.Header(RequestIDHeader, requestID)

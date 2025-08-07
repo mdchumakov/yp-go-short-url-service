@@ -30,10 +30,10 @@ func NewPingHandler(service service.HealthCheckService) handler.Handler {
 // @Router /ping [get]
 func (h *pingHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
-	requestID := middleware.ExtractRequestID(c)
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	logger.Infow("Starting health check", "requestID", requestID)
-	if err := h.service.Ping(c); err != nil {
+	if err := h.service.Ping(c.Request.Context()); err != nil {
 		logger.Errorw("Health check failed",
 			"error", err,
 			"request_id", requestID,
