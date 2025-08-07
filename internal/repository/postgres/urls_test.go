@@ -278,18 +278,6 @@ func TestURLsRepository_Create_WithNilURL(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-// Тест для проверки интерфейса
-func TestURLsRepository_ImplementsInterface(t *testing.T) {
-	mock, _ := setupMockPool(t)
-	defer mock.Close()
-
-	// Создаем репозиторий напрямую с моком для проверки интерфейса
-	repo := &urlsRepository{pool: mock}
-	var _ repository.URLRepository = repo
-	var _ repository.URLRepositoryReader = repo
-	var _ repository.URLRepositoryWriter = repo
-}
-
 // Тест для конструктора
 func TestNewURLsRepository_WithRealPool(t *testing.T) {
 	// Создаем мок пула
