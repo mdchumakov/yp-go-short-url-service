@@ -5,17 +5,17 @@ import (
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
-	ShortenAPI "yp-go-short-url-service/internal/handler/api/shorten"
+	shortenAPI "yp-go-short-url-service/internal/handler/api/shorten"
 	"yp-go-short-url-service/internal/handler/health"
-	URLExtractorHandler "yp-go-short-url-service/internal/handler/urlExtractor"
-	URLShortenerHandler "yp-go-short-url-service/internal/handler/urlShortener"
+	urlExtractorHandler "yp-go-short-url-service/internal/handler/urlExtractor"
+	urlShortenerHandler "yp-go-short-url-service/internal/handler/urlShortener"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/middleware/gzip"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/repository/postgres"
-	HealthService "yp-go-short-url-service/internal/service/health"
-	URLExtractorService "yp-go-short-url-service/internal/service/urlExtractor"
-	URLShortenerService "yp-go-short-url-service/internal/service/urlShortener"
+	healthService "yp-go-short-url-service/internal/service/health"
+	urlExtractorService "yp-go-short-url-service/internal/service/urlExtractor"
+	urlShortenerService "yp-go-short-url-service/internal/service/urlShortener"
 
 	_ "yp-go-short-url-service/docs"
 
@@ -66,20 +66,20 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		logger.Info("PostgreSQL успешно инициализирован")
 	}
 
-	pingService := HealthService.NewHealthCheckService(repoURLs)
-	urlShortenerService := URLShortenerService.NewLinkShortenerService(repoURLs)
-	urlExtractorService := URLExtractorService.NewLinkExtractorService(repoURLs)
+	pingService := healthService.NewHealthCheckService(repoURLs)
+	URLShortenerService := urlShortenerService.NewLinkShortenerService(repoURLs)
+	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs)
 
-	urlExtractorHandler := URLExtractorHandler.NewExtractingFullLinkHandler(urlExtractorService)
-	urlShortenerHandler := URLShortenerHandler.NewCreatingShortLinksHandler(urlShortenerService, settings)
-	urlShortenerAPIHandler := ShortenAPI.NewCreatingShortLinksAPIHandler(urlShortenerService, settings)
+	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
+	URLShortenerHandler := urlShortenerHandler.NewCreatingShortLinksHandler(URLShortenerService, settings)
+	URLShortenerAPIHandler := shortenAPI.NewCreatingShortLinksAPIHandler(URLShortenerService, settings)
 	healthHandler := health.NewPingHandler(pingService)
 
 	return &App{
 		router:               router,
-		shortLinksHandler:    urlShortenerHandler,
-		shortLinksHandlerAPI: urlShortenerAPIHandler,
-		fullLinkHandler:      urlExtractorHandler,
+		shortLinksHandler:    URLShortenerHandler,
+		shortLinksHandlerAPI: URLShortenerAPIHandler,
+		fullLinkHandler:      URLExtractorHandler,
 		pingHandler:          healthHandler,
 		settings:             settings,
 		logger:               logger,
