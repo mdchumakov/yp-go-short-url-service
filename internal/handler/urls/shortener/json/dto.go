@@ -1,4 +1,4 @@
-package shorten
+package json
 
 // CreatingShortLinksDTOIn представляет входные данные для создания короткой ссылки
 type CreatingShortLinksDTOIn struct {

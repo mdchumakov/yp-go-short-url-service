@@ -1,4 +1,4 @@
-package urlShortener
+package text
 
 import (
 	"fmt"

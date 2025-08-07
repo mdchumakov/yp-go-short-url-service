@@ -5,16 +5,17 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"yp-go-short-url-service/internal/config"
-	shortenAPI "yp-go-short-url-service/internal/handler/api/shorten"
+	json2 "yp-go-short-url-service/internal/handler/urls/shortener/json"
 	serviceMock "yp-go-short-url-service/internal/service/mock"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 const apiPath = "/api/shorten"
@@ -54,7 +55,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	settings := getDefaultSettings()
 
 	mockService := serviceMock.NewMockLinkShortenerService(ctrl)
-	handler := shortenAPI.NewCreatingShortLinksAPIHandler(mockService, settings)
+	handler := json2.NewCreatingShortLinksAPIHandler(mockService, settings)
 
 	r.Use(Middleware(logger))
 
@@ -82,7 +83,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 
-	expectedBody := shortenAPI.CreatingShortLinksDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
+	expectedBody := json2.CreatingShortLinksDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
 	expectedBodyJSON, _ := json.Marshal(expectedBody)
 
 	zr, _ := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))

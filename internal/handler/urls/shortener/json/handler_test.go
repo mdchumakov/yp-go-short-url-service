@@ -1,4 +1,4 @@
-package shorten
+package json
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package urlShortener
+package shortener
 
 import (
 	"context"
