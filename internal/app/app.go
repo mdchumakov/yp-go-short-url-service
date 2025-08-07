@@ -36,13 +36,15 @@ type App struct {
 }
 
 func NewApp(logger *zap.SugaredLogger) *App {
+	var err error
+
 	ctx := context.Background()
 
 	router := gin.Default()
 	settings := config.NewSettings()
 
 	// Пытаемся подключиться к PostgreSQL
-	pgPool, err := db.InitPostgresDB(
+	pgPool, _ := db.InitPostgresDB(
 		ctx,
 		settings.GetDatabaseDSN(),
 	)
