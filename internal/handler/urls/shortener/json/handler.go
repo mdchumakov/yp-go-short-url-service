@@ -44,7 +44,7 @@ func NewCreatingShortURLsAPIHandler(
 // @Router /api/shorten [post]
 func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
-	requestID := middleware.ExtractRequestID(c)
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	logger.Infow("Received shorten URL request",
 		"method", c.Request.Method,

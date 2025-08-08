@@ -42,7 +42,7 @@ type creatingShortURLsByBatchAPIHandler struct {
 // @Router /api/shorten/batch [post]
 func (h *creatingShortURLsByBatchAPIHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
-	requestID := middleware.ExtractRequestID(c)
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	logger.Infow("Received shorten URL request",
 		"method", c.Request.Method,
