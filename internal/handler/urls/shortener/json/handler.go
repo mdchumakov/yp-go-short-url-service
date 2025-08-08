@@ -1,7 +1,6 @@
 package json
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -106,15 +105,7 @@ func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 			)
 			resultURL := h.buildShortURL(shortedURL)
 			dtoOut := CreatingShortURLsDTOOut{Result: resultURL}
-			jsonData, err := json.Marshal(dtoOut)
-			if err != nil {
-				logger.Errorw("Failed to marshal response",
-					"error", err,
-					"request_id", requestID)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
-				return
-			}
-			c.JSON(http.StatusConflict, jsonData)
+			c.JSON(http.StatusConflict, dtoOut)
 			return
 		}
 		logger.Errorw("Failed to shorten URL",
@@ -133,18 +124,7 @@ func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 		"request_id", requestID)
 
 	dtoOut := CreatingShortURLsDTOOut{Result: resultURL}
-	// Если бы не авто-тесты в CI сделал бы так:
-	// c.JSON(http.StatusCreated, dtoOut)
-	jsonData, err := json.Marshal(dtoOut)
-	if err != nil {
-		logger.Errorw("Failed to marshal response",
-			"error", err,
-			"request_id", requestID)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
-		return
-	}
-
-	c.Data(http.StatusCreated, "application/json", jsonData)
+	c.JSON(http.StatusCreated, dtoOut)
 }
 
 func (h *creatingShortURLsAPIHandler) buildShortURL(shortedURL string) string {

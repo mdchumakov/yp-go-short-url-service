@@ -2,10 +2,11 @@ package gzip
 
 import (
 	"compress/gzip"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
@@ -35,6 +36,15 @@ func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
 			return
 		}
 
+		// Проверяем, нужно ли сжимать ответ
+		if contentEncoding := c.Request.Header.Get("Accept-Encoding"); !strings.Contains(contentEncoding, "gzip") {
+			log.Warnw("skipping gzip middleware for unsupported content Encoding",
+				"contentEncoding", contentEncoding,
+			)
+			c.Next()
+			return
+		}
+
 		// Сервис должен уметь возвращать ответ в сжатом формате (с HTTP-заголовком Content-Encoding).
 		gw := gzip.NewWriter(c.Writer)
 		defer func(gz *gzip.Writer) {
@@ -44,7 +54,7 @@ func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
 			}
 		}(gw)
 
-		if err := compressResponse(c, log, gw); err != nil {
+		if err := compressResponse(c, gw); err != nil {
 			log.Errorw("failed to compress response", "error", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -81,14 +91,7 @@ func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
 	return nil
 }
 
-func compressResponse(c *gin.Context, log *zap.SugaredLogger, gw *gzip.Writer) error {
-	if contentEncoding := c.Request.Header.Get("Accept-Encoding"); !strings.Contains(contentEncoding, "gzip") {
-		log.Warnw("skipping gzip middleware for unsupported content Encoding",
-			"contentEncoding", contentEncoding,
-		)
-		return nil
-	}
-
+func compressResponse(c *gin.Context, gw *gzip.Writer) error {
 	writer := &gzipResponseBodyWriter{
 		ResponseWriter: c.Writer,
 		writer:         gw,

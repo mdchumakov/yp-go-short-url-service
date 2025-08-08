@@ -16,7 +16,7 @@ import (
 )
 
 type PGSettings struct {
-	DSN            string `envconfig:"DATABASE_DSN"`
+	DSN            string `envconfig:"$DATABASE_CONN_STRING"`
 	MigrationsPath string `envconfig:"MIGRATIONS_PATH" default:"migrations"`
 }
 
