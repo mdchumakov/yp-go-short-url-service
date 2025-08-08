@@ -119,7 +119,7 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 	defer func(stmt *sql.Stmt) {
 		err := stmt.Close()
 		if err != nil {
-
+			return
 		}
 	}(stmt)
 

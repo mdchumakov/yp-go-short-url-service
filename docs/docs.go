@@ -338,8 +338,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Сервис для сокращения длинных URL-адресов",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
