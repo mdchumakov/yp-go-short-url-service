@@ -61,6 +61,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "409": {
+                        "description": "URL уже существует в системе",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
@@ -106,6 +112,12 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "URL уже существует в системе",
+                        "schema": {
+                            "$ref": "#/definitions/json.CreatingShortURLsDTOOut"
                         }
                     },
                     "415": {
@@ -326,6 +338,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Сервис для сокращения длинных URL-адресов",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

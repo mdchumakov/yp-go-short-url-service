@@ -88,6 +88,10 @@ paths:
           description: Неверный запрос
           schema:
             type: string
+        "409":
+          description: URL уже существует в системе
+          schema:
+            type: string
         "500":
           description: Внутренняя ошибка сервера
           schema:
@@ -150,6 +154,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "409":
+          description: URL уже существует в системе
+          schema:
+            $ref: '#/definitions/json.CreatingShortURLsDTOOut'
         "415":
           description: Неподдерживаемый тип контента
           schema:

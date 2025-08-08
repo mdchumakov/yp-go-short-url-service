@@ -9,6 +9,7 @@ import (
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
+	"yp-go-short-url-service/internal/service/urls/shortener"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,6 +38,7 @@ func NewCreatingShortURLsAPIHandler(
 // @Param request body CreatingShortURLsDTOIn true "Данные для создания короткой ссылки"
 // @Success 201 {object} CreatingShortURLsDTOOut "Короткая ссылка успешно создана"
 // @Failure 400 {object} map[string]interface{} "Неверный запрос"
+// @Failure 409 {object} CreatingShortURLsDTOOut "URL уже существует в системе"
 // @Failure 415 {object} map[string]interface{} "Неподдерживаемый тип контента"
 // @Failure 500 {object} map[string]interface{} "Внутренняя ошибка сервера"
 // @Router /api/shorten [post]
@@ -98,6 +100,23 @@ func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 
 	shortedURL, err := h.service.ShortURL(c.Request.Context(), longURL)
 	if err != nil {
+		if shortener.IsAlreadyExistsError(err) && shortedURL != "" {
+			logger.Warnw("URL already exists in storage",
+				"long_url", longURL,
+			)
+			resultURL := h.buildShortURL(shortedURL)
+			dtoOut := CreatingShortURLsDTOOut{Result: resultURL}
+			jsonData, err := json.Marshal(dtoOut)
+			if err != nil {
+				logger.Errorw("Failed to marshal response",
+					"error", err,
+					"request_id", requestID)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
+				return
+			}
+			c.Data(http.StatusConflict, "application/json", jsonData)
+			return
+		}
 		logger.Errorw("Failed to shorten URL",
 			"error", err,
 			"long_url", longURL,

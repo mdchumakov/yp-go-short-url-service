@@ -44,7 +44,7 @@ func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*mod
 		&urls.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrURLNotFound
 		}
 		return nil, err
@@ -66,7 +66,7 @@ func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*m
 		&urls.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrURLNotFound
 		}
 		return nil, err
@@ -102,7 +102,10 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				return
+			}
 		}
 	}()
 
@@ -113,7 +116,12 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+
+		}
+	}(stmt)
 
 	// Выполняем batch вставку
 	for _, url := range urls {
@@ -138,7 +146,12 @@ func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*mode
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
 
 	var urls []*model.URLsModel
 	for rows.Next() {

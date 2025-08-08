@@ -9,6 +9,7 @@ import (
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
+	"yp-go-short-url-service/internal/service/urls/shortener"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +40,7 @@ func NewCreatingShortLinksHandler(
 // @Param url body string true "Длинный URL для сокращения"
 // @Success 201 {string} string "Сокращенный URL"
 // @Failure 400 {string} string "Неверный запрос"
+// @Failure 409 {string} string "URL уже существует в системе"
 // @Failure 500 {string} string "Внутренняя ошибка сервера"
 // @Router / [post]
 func (h *CreatingShortLinks) Handle(c *gin.Context) {
@@ -69,6 +71,12 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 
 	shortedURL, err := h.service.ShortURL(c, longURL)
 	if err != nil {
+		if shortener.IsAlreadyExistsError(err) && shortedURL != "" {
+			logger.Warnw("URL already exists in storage", "long_url", longURL, "request_id", requestID)
+			resultURL := h.buildShortURL(shortedURL)
+			c.String(http.StatusConflict, resultURL)
+			return
+		}
 		logger.Errorw("Failed to shorten URL", "long_url", longURL, "error", err, "request_id", requestID)
 		c.String(http.StatusInternalServerError, "Ошибка при сокращении URL: %v", err)
 		return

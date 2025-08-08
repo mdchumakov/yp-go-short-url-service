@@ -108,7 +108,7 @@ func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (str
 			"long_url", longURL,
 			"request_id", requestID,
 		)
-		return *shortURLFromStorage, nil
+		return *shortURLFromStorage, ErrURLAlreadyExists
 	}
 
 	logger.Infow("Short URL not found in storage, generating new one",

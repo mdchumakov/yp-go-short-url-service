@@ -55,6 +55,12 @@
                             "type": "string"
                         }
                     },
+                    "409": {
+                        "description": "URL уже существует в системе",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
@@ -100,6 +106,12 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "URL уже существует в системе",
+                        "schema": {
+                            "$ref": "#/definitions/json.CreatingShortURLsDTOOut"
                         }
                     },
                     "415": {

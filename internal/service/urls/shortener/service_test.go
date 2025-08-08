@@ -95,8 +95,9 @@ func Test_linkShortenerService_ShortURL(t *testing.T) {
 		// Вызываем метод
 		result, err := service.ShortURL(ctx, longURL)
 
-		// Проверяем результат
-		assert.NoError(t, err)
+		// Проверяем результат - теперь должна возвращаться ошибка
+		assert.Error(t, err)
+		assert.Equal(t, ErrURLAlreadyExists, err)
 		assert.Equal(t, existingShortURL, result)
 	})
 
@@ -666,5 +667,169 @@ func Test_urlShortenerService_ShortURLsByBatch(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result, 1)
+	})
+}
+
+func Test_urlShortenerService_ShortURL_ConflictScenarios(t *testing.T) {
+	// Создаем контроллер для моков
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Создаем мок репозитория
+	mockRepo := mock.NewMockURLRepository(ctrl)
+
+	// Создаем сервис
+	service := &urlShortenerService{
+		repository: mockRepo,
+	}
+
+	// Создаем контекст с логгером для тестов
+	logger, _ := zap.NewDevelopment()
+	ctx := middleware.WithLogger(context.Background(), logger.Sugar())
+
+	t.Run("конфликт при попытке сократить уже существующий URL", func(t *testing.T) {
+		longURL := "https://example.com/existing/url"
+		existingShortURL := "existing123"
+		existingURL := &model.URLsModel{
+			ID:        1,
+			ShortURL:  existingShortURL,
+			LongURL:   longURL,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		// Ожидаем вызов GetByLongURL с существующим URL
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, longURL).
+			Return(existingURL, nil)
+
+		// Вызываем метод
+		result, err := service.ShortURL(ctx, longURL)
+
+		// Проверяем результат - должна возвращаться ошибка конфликта
+		assert.Error(t, err)
+		assert.Equal(t, ErrURLAlreadyExists, err)
+		assert.Equal(t, existingShortURL, result)
+	})
+
+	t.Run("конфликт с разными длинными URL, но одинаковыми короткими", func(t *testing.T) {
+		longURL1 := "https://example.com/url1"
+		longURL2 := "https://example.com/url2"
+
+		// Первый вызов - URL не найден, создаем новый
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, longURL1).
+			Return(nil, repository.ErrURLNotFound)
+
+		mockRepo.EXPECT().
+			Create(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, url *model.URLsModel) error {
+				assert.Equal(t, longURL1, url.LongURL)
+				assert.NotEmpty(t, url.ShortURL)
+				return nil
+			})
+
+		result1, err1 := service.ShortURL(ctx, longURL1)
+		assert.NoError(t, err1)
+		assert.NotEmpty(t, result1)
+
+		// Второй вызов - URL не найден, но при создании возникает конфликт
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, longURL2).
+			Return(nil, repository.ErrURLNotFound)
+
+		mockRepo.EXPECT().
+			Create(ctx, gomock.Any()).
+			Return(repository.ErrURLExists)
+
+		result2, err2 := service.ShortURL(ctx, longURL2)
+		assert.Error(t, err2)
+		assert.Equal(t, repository.ErrURLExists, err2)
+		assert.Equal(t, "", result2)
+	})
+
+	t.Run("проверка IsAlreadyExistsError функции", func(t *testing.T) {
+		// Тестируем функцию проверки ошибки
+		assert.True(t, IsAlreadyExistsError(ErrURLAlreadyExists))
+		assert.False(t, IsAlreadyExistsError(errors.New("other error")))
+		assert.False(t, IsAlreadyExistsError(nil))
+	})
+
+	t.Run("конфликт в пакетном режиме - все URL уже существуют", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/existing1"},
+			{"correlation_id": "2", "original_url": "https://example.com/existing2"},
+		}
+
+		// Существующие URL
+		existingURL1 := &model.URLsModel{
+			ID:        1,
+			ShortURL:  "existing1",
+			LongURL:   "https://example.com/existing1",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		existingURL2 := &model.URLsModel{
+			ID:        2,
+			ShortURL:  "existing2",
+			LongURL:   "https://example.com/existing2",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		// Ожидаем вызовы GetByLongURL - все URL найдены
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/existing1").
+			Return(existingURL1, nil)
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/existing2").
+			Return(existingURL2, nil)
+
+		// Ожидаем вызов CreateBatch с пустым массивом (нет новых URL для создания)
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, urls []*model.URLsModel) error {
+				assert.Len(t, urls, 0)
+				return nil
+			})
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат - должен вернуть существующие short URL без ошибки
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 2)
+		assert.Equal(t, "existing1", result[0]["short_url"])
+		assert.Equal(t, "existing2", result[1]["short_url"])
+	})
+
+	t.Run("конфликт в пакетном режиме - ошибка при создании", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/new1"},
+			{"correlation_id": "2", "original_url": "https://example.com/new2"},
+		}
+
+		// Ожидаем вызовы GetByLongURL - все URL не найдены
+		for _, urlData := range longURLs {
+			mockRepo.EXPECT().
+				GetByLongURL(ctx, urlData["original_url"]).
+				Return(nil, repository.ErrURLNotFound)
+		}
+
+		// Ожидаем вызов CreateBatch с ошибкой конфликта
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			Return(repository.ErrURLExists)
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат - должна возвращаться ошибка
+		assert.Error(t, err)
+		assert.Equal(t, repository.ErrURLExists, err)
+		assert.Nil(t, result)
 	})
 }
