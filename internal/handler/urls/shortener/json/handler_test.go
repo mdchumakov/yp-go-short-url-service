@@ -205,7 +205,7 @@ func TestCreatingShortLinksAPIHandler_Handle_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
 
 	var response CreatingShortURLsDTOOut
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -489,7 +489,7 @@ func TestCreatingShortLinksAPIHandler_Handle_JSONMarshalError(t *testing.T) {
 
 	// В нормальных условиях этот тест должен пройти успешно
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
 
 	var response CreatingShortURLsDTOOut
 	err := json.Unmarshal(w.Body.Bytes(), &response)
