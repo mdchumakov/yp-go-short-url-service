@@ -114,7 +114,7 @@ func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create response"})
 				return
 			}
-			c.Data(http.StatusConflict, "application/json", jsonData)
+			c.JSON(http.StatusConflict, jsonData)
 			return
 		}
 		logger.Errorw("Failed to shorten URL",
