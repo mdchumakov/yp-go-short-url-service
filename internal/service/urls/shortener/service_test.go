@@ -25,11 +25,11 @@ func TestNewLinkShortenerService(t *testing.T) {
 	mockRepo := mock.NewMockURLRepository(ctrl)
 
 	// Создаем сервис через тестовый конструктор
-	service := NewLinkShortenerService(mockRepo)
+	service := NewURLShortenerService(mockRepo)
 
 	// Проверяем, что сервис создан корректно
 	assert.NotNil(t, service)
-	assert.IsType(t, &linkShortenerService{}, service)
+	assert.IsType(t, &urlShortenerService{}, service)
 }
 
 func Test_linkShortenerService_ShortURL(t *testing.T) {
@@ -41,7 +41,7 @@ func Test_linkShortenerService_ShortURL(t *testing.T) {
 	mockRepo := mock.NewMockURLRepository(ctrl)
 
 	// Создаем сервис
-	service := &linkShortenerService{
+	service := &urlShortenerService{
 		repository: mockRepo,
 	}
 
@@ -196,7 +196,7 @@ func Test_linkShortenerService_ShortURL_EdgeCases(t *testing.T) {
 	mockRepo := mock.NewMockURLRepository(ctrl)
 
 	// Создаем сервис
-	service := &linkShortenerService{
+	service := &urlShortenerService{
 		repository: mockRepo,
 	}
 
@@ -291,7 +291,7 @@ func Test_linkShortenerService_extractShortURLIfExists(t *testing.T) {
 	mockRepo := mock.NewMockURLRepository(ctrl)
 
 	// Создаем сервис
-	service := &linkShortenerService{
+	service := &urlShortenerService{
 		repository: mockRepo,
 	}
 
@@ -364,7 +364,7 @@ func Test_linkShortenerService_saveShortURLToStorage(t *testing.T) {
 	mockRepo := mock.NewMockURLRepository(ctrl)
 
 	// Создаем сервис
-	service := &linkShortenerService{
+	service := &urlShortenerService{
 		repository: mockRepo,
 	}
 
@@ -404,5 +404,267 @@ func Test_linkShortenerService_saveShortURLToStorage(t *testing.T) {
 		// Проверяем результат
 		assert.Error(t, err)
 		assert.Equal(t, expectedErr, err)
+	})
+}
+
+func Test_urlShortenerService_ShortURLsByBatch(t *testing.T) {
+	// Создаем контроллер для моков
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Создаем мок репозитория
+	mockRepo := mock.NewMockURLRepository(ctrl)
+
+	// Создаем сервис
+	service := &urlShortenerService{
+		repository: mockRepo,
+	}
+
+	// Создаем контекст с логгером для тестов
+	logger, _ := zap.NewDevelopment()
+	ctx := middleware.WithLogger(context.Background(), logger.Sugar())
+
+	t.Run("успешное пакетное сокращение - все URL новые", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/url1"},
+			{"correlation_id": "2", "original_url": "https://example.com/url2"},
+			{"correlation_id": "3", "original_url": "https://example.com/url3"},
+		}
+
+		// Ожидаем вызовы GetByLongURL для каждого URL (все не найдены)
+		for _, urlData := range longURLs {
+			mockRepo.EXPECT().
+				GetByLongURL(ctx, urlData["original_url"]).
+				Return(nil, repository.ErrURLNotFound)
+		}
+
+		// Ожидаем вызов CreateBatch для сохранения новых URL
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, urls []*model.URLsModel) error {
+				// Проверяем, что передано правильное количество URL
+				assert.Len(t, urls, 3)
+
+				// Проверяем каждый URL
+				for i, url := range urls {
+					assert.Equal(t, longURLs[i]["original_url"], url.LongURL)
+					assert.NotEmpty(t, url.ShortURL)
+					assert.Len(t, url.ShortURL, 8) // Проверяем длину short URL
+					assert.NotZero(t, url.CreatedAt)
+					assert.NotZero(t, url.UpdatedAt)
+				}
+				return nil
+			})
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 3)
+
+		// Проверяем, что в результате есть short_url для каждого URL
+		for i, urlData := range result {
+			assert.Equal(t, longURLs[i]["correlation_id"], urlData["correlation_id"])
+			assert.Equal(t, longURLs[i]["original_url"], urlData["original_url"])
+			assert.NotEmpty(t, urlData["short_url"])
+			assert.Len(t, urlData["short_url"], 8)
+		}
+	})
+
+	t.Run("пакетное сокращение - некоторые URL уже существуют", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/existing1"},
+			{"correlation_id": "2", "original_url": "https://example.com/new2"},
+			{"correlation_id": "3", "original_url": "https://example.com/existing3"},
+		}
+
+		// Существующие URL
+		existingURL1 := &model.URLsModel{
+			ID:        1,
+			ShortURL:  "existing1",
+			LongURL:   "https://example.com/existing1",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		existingURL3 := &model.URLsModel{
+			ID:        3,
+			ShortURL:  "existing3",
+			LongURL:   "https://example.com/existing3",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		// Ожидаем вызовы GetByLongURL
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/existing1").
+			Return(existingURL1, nil)
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/new2").
+			Return(nil, repository.ErrURLNotFound)
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/existing3").
+			Return(existingURL3, nil)
+
+		// Ожидаем вызов CreateBatch только для нового URL
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, urls []*model.URLsModel) error {
+				// Проверяем, что передано только один новый URL
+				assert.Len(t, urls, 1)
+				assert.Equal(t, "https://example.com/new2", urls[0].LongURL)
+				assert.NotEmpty(t, urls[0].ShortURL)
+				return nil
+			})
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 3)
+
+		// Проверяем, что существующие URL имеют правильные short_url
+		assert.Equal(t, "existing1", result[0]["short_url"])
+		assert.NotEmpty(t, result[1]["short_url"]) // Новый URL
+		assert.Equal(t, "existing3", result[2]["short_url"])
+	})
+
+	t.Run("ошибка при поиске существующего URL", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/url1"},
+		}
+
+		expectedErr := errors.New("database connection failed")
+
+		// Ожидаем вызов GetByLongURL с ошибкой
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/url1").
+			Return(nil, expectedErr)
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.Error(t, err)
+		assert.Equal(t, expectedErr, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("ошибка при сохранении в базу данных", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/url1"},
+			{"correlation_id": "2", "original_url": "https://example.com/url2"},
+		}
+
+		expectedErr := errors.New("database write failed")
+
+		// Ожидаем вызовы GetByLongURL (все не найдены)
+		for _, urlData := range longURLs {
+			mockRepo.EXPECT().
+				GetByLongURL(ctx, urlData["original_url"]).
+				Return(nil, repository.ErrURLNotFound)
+		}
+
+		// Ожидаем вызов CreateBatch с ошибкой
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			Return(expectedErr)
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.Error(t, err)
+		assert.Equal(t, expectedErr, err)
+		assert.Nil(t, result)
+	})
+
+	t.Run("пустой массив URL", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{}
+
+		// Ожидаем вызов CreateBatch с пустым массивом
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, urls []*model.URLsModel) error {
+				assert.Len(t, urls, 0)
+				return nil
+			})
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 0)
+	})
+
+	t.Run("один URL в пакете", func(t *testing.T) {
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/single"},
+		}
+
+		// Ожидаем вызов GetByLongURL
+		mockRepo.EXPECT().
+			GetByLongURL(ctx, "https://example.com/single").
+			Return(nil, repository.ErrURLNotFound)
+
+		// Ожидаем вызов CreateBatch
+		mockRepo.EXPECT().
+			CreateBatch(ctx, gomock.Any()).
+			DoAndReturn(func(ctx context.Context, urls []*model.URLsModel) error {
+				assert.Len(t, urls, 1)
+				assert.Equal(t, "https://example.com/single", urls[0].LongURL)
+				assert.NotEmpty(t, urls[0].ShortURL)
+				return nil
+			})
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctx, longURLs)
+
+		// Проверяем результат
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "1", result[0]["correlation_id"])
+		assert.Equal(t, "https://example.com/single", result[0]["original_url"])
+		assert.NotEmpty(t, result[0]["short_url"])
+	})
+
+	t.Run("контекст без логгера", func(t *testing.T) {
+		// Создаем контекст без логгера
+		ctxWithoutLogger := context.Background()
+
+		// Тестовые данные
+		longURLs := []map[string]string{
+			{"correlation_id": "1", "original_url": "https://example.com/test"},
+		}
+
+		// Ожидаем вызов GetByLongURL
+		mockRepo.EXPECT().
+			GetByLongURL(ctxWithoutLogger, "https://example.com/test").
+			Return(nil, repository.ErrURLNotFound)
+
+		// Ожидаем вызов CreateBatch
+		mockRepo.EXPECT().
+			CreateBatch(ctxWithoutLogger, gomock.Any()).
+			Return(nil)
+
+		// Вызываем метод
+		result, err := service.ShortURLsByBatch(ctxWithoutLogger, longURLs)
+
+		// Проверяем результат - должен работать даже без логгера
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 1)
 	})
 }

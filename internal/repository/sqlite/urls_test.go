@@ -423,3 +423,140 @@ func TestURLsRepository_GetAllAndGetTotalCount_Integration(t *testing.T) {
 	// Проверяем, что получили все записи
 	assert.Equal(t, int(totalCount), totalRetrieved)
 }
+
+func TestURLsRepository_CreateBatch_Success(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := NewURLsRepository(db)
+
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        2,
+			ShortURL:  "def456",
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        3,
+			ShortURL:  "ghi789",
+			LongURL:   "https://example3.com",
+			CreatedAt: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	err := repo.CreateBatch(context.Background(), urls)
+	assert.NoError(t, err)
+
+	// Проверяем, что все URL были созданы
+	for _, expectedURL := range urls {
+		result, err := repo.GetByShortURL(context.Background(), expectedURL.ShortURL)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedURL.ShortURL, result.ShortURL)
+		assert.Equal(t, expectedURL.LongURL, result.LongURL)
+		assert.Equal(t, expectedURL.ID, result.ID)
+	}
+}
+
+func TestURLsRepository_CreateBatch_EmptySlice(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := NewURLsRepository(db)
+
+	err := repo.CreateBatch(context.Background(), []*model.URLsModel{})
+	assert.NoError(t, err)
+}
+
+func TestURLsRepository_CreateBatch_WithNilURLs(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := NewURLsRepository(db)
+
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		nil, // nil URL
+		{
+			ID:        2,
+			ShortURL:  "def456",
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	err := repo.CreateBatch(context.Background(), urls)
+	assert.NoError(t, err)
+
+	// Проверяем, что только не-nil URL были созданы
+	validURLs := []*model.URLsModel{urls[0], urls[2]}
+	for _, expectedURL := range validURLs {
+		result, err := repo.GetByShortURL(context.Background(), expectedURL.ShortURL)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedURL.ShortURL, result.ShortURL)
+		assert.Equal(t, expectedURL.LongURL, result.LongURL)
+	}
+}
+
+func TestURLsRepository_CreateBatch_DuplicateHandling(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := NewURLsRepository(db)
+
+	// Создаем URL с одинаковым short_url
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        2,
+			ShortURL:  "abc123", // Дубликат
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        3,
+			ShortURL:  "def456",
+			LongURL:   "https://example3.com",
+			CreatedAt: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	err := repo.CreateBatch(context.Background(), urls)
+	assert.NoError(t, err)
+
+	// Проверяем, что только уникальные URL были созданы
+	expectedCount := int64(2) // abc123 и def456
+	actualCount, err := repo.GetTotalCount(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, expectedCount, actualCount)
+
+	// Проверяем, что первый URL существует
+	result, err := repo.GetByShortURL(context.Background(), "abc123")
+	assert.NoError(t, err)
+	assert.Equal(t, "abc123", result.ShortURL)
+	assert.Equal(t, "https://example1.com", result.LongURL)
+}

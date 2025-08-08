@@ -16,6 +16,7 @@ type DBInterface interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	PingContext(ctx context.Context) error
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 }
 
 type urlsRepository struct {
@@ -87,6 +88,47 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	}
 
 	return nil
+}
+
+func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
+	if len(urls) == 0 {
+		return nil
+	}
+
+	// Используем транзакцию для атомарности операции
+	tx, err := r.db.(*sql.DB).BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Подготавливаем batch insert запрос
+	query := `INSERT OR IGNORE INTO urls (id, short_url, long_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	// Выполняем batch вставку
+	for _, url := range urls {
+		if url == nil {
+			continue
+		}
+
+		_, err := stmt.ExecContext(ctx, url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Подтверждаем транзакцию
+	return tx.Commit()
 }
 
 func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {

@@ -55,7 +55,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	settings := getDefaultSettings()
 
 	mockService := serviceMock.NewMockLinkShortenerService(ctrl)
-	handler := json2.NewCreatingShortLinksAPIHandler(mockService, settings)
+	handler := json2.NewCreatingShortURLsAPIHandler(mockService, settings)
 
 	r.Use(Middleware(logger))
 
@@ -83,7 +83,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 
-	expectedBody := json2.CreatingShortLinksDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
+	expectedBody := json2.CreatingShortURLsDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
 	expectedBodyJSON, _ := json.Marshal(expectedBody)
 
 	zr, _ := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))

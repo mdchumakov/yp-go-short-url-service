@@ -49,6 +49,20 @@ func (mr *MockURLRepositoryMockRecorder) Create(ctx, url interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockURLRepository)(nil).Create), ctx, url)
 }
 
+// CreateBatch mocks base method.
+func (m *MockURLRepository) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBatch", ctx, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateBatch indicates an expected call of CreateBatch.
+func (mr *MockURLRepositoryMockRecorder) CreateBatch(ctx, urls interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBatch", reflect.TypeOf((*MockURLRepository)(nil).CreateBatch), ctx, urls)
+}
+
 // GetAll mocks base method.
 func (m *MockURLRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
 	m.ctrl.T.Helper()
@@ -255,4 +269,18 @@ func (m *MockURLRepositoryWriter) Create(ctx context.Context, url *model.URLsMod
 func (mr *MockURLRepositoryWriterMockRecorder) Create(ctx, url interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockURLRepositoryWriter)(nil).Create), ctx, url)
+}
+
+// CreateBatch mocks base method.
+func (m *MockURLRepositoryWriter) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBatch", ctx, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateBatch indicates an expected call of CreateBatch.
+func (mr *MockURLRepositoryWriterMockRecorder) CreateBatch(ctx, urls interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBatch", reflect.TypeOf((*MockURLRepositoryWriter)(nil).CreateBatch), ctx, urls)
 }

@@ -16,6 +16,7 @@ type PoolInterface interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 type urlsRepository struct {
@@ -86,6 +87,39 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	}
 
 	return nil
+}
+
+func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
+	if len(urls) == 0 {
+		return nil
+	}
+
+	// Используем транзакцию для атомарности операции
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Подготавливаем batch insert запрос
+	query := `INSERT INTO urls (short_url, long_url, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT (short_url) DO NOTHING`
+
+	// Выполняем вставку каждого URL в транзакции
+	for _, url := range urls {
+		if url == nil {
+			continue
+		}
+		_, err := tx.Exec(ctx, query, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+		if err != nil {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				return err
+			}
+			return err
+		}
+	}
+
+	// Подтверждаем транзакцию
+	return tx.Commit(ctx)
 }
 
 func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {

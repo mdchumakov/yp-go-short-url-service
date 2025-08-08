@@ -49,6 +49,21 @@ func (mr *MockLinkShortenerServiceMockRecorder) ShortURL(ctx, longURL interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShortURL", reflect.TypeOf((*MockLinkShortenerService)(nil).ShortURL), ctx, longURL)
 }
 
+// ShortURLsByBatch mocks base method.
+func (m *MockLinkShortenerService) ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ShortURLsByBatch", ctx, longURLs)
+	ret0, _ := ret[0].([]map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ShortURLsByBatch indicates an expected call of ShortURLsByBatch.
+func (mr *MockLinkShortenerServiceMockRecorder) ShortURLsByBatch(ctx, longURLs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShortURLsByBatch", reflect.TypeOf((*MockLinkShortenerService)(nil).ShortURLsByBatch), ctx, longURLs)
+}
+
 // MockLinkExtractorService is a mock of LinkExtractorService interface.
 type MockLinkExtractorService struct {
 	ctrl     *gomock.Controller
@@ -122,4 +137,41 @@ func (m *MockHealthCheckService) Ping(ctx context.Context) error {
 func (mr *MockHealthCheckServiceMockRecorder) Ping(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockHealthCheckService)(nil).Ping), ctx)
+}
+
+// MockDataInitializerService is a mock of DataInitializerService interface.
+type MockDataInitializerService struct {
+	ctrl     *gomock.Controller
+	recorder *MockDataInitializerServiceMockRecorder
+}
+
+// MockDataInitializerServiceMockRecorder is the mock recorder for MockDataInitializerService.
+type MockDataInitializerServiceMockRecorder struct {
+	mock *MockDataInitializerService
+}
+
+// NewMockDataInitializerService creates a new mock instance.
+func NewMockDataInitializerService(ctrl *gomock.Controller) *MockDataInitializerService {
+	mock := &MockDataInitializerService{ctrl: ctrl}
+	mock.recorder = &MockDataInitializerServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDataInitializerService) EXPECT() *MockDataInitializerServiceMockRecorder {
+	return m.recorder
+}
+
+// Setup mocks base method.
+func (m *MockDataInitializerService) Setup(ctx context.Context, fileStoragePath string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Setup", ctx, fileStoragePath)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Setup indicates an expected call of Setup.
+func (mr *MockDataInitializerServiceMockRecorder) Setup(ctx, fileStoragePath interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Setup", reflect.TypeOf((*MockDataInitializerService)(nil).Setup), ctx, fileStoragePath)
 }

@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/shorten.CreatingShortLinksDTOIn"
+                            "$ref": "#/definitions/json.CreatingShortURLsDTOIn"
                         }
                     }
                 ],
@@ -98,7 +98,68 @@ const docTemplate = `{
                     "201": {
                         "description": "Короткая ссылка успешно создана",
                         "schema": {
-                            "$ref": "#/definitions/shorten.CreatingShortLinksDTOOut"
+                            "$ref": "#/definitions/json.CreatingShortURLsDTOOut"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "415": {
+                        "description": "Неподдерживаемый тип контента",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/shorten/batch": {
+            "post": {
+                "description": "Создает короткие ссылки из массива длинных URL-ов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "shortener"
+                ],
+                "summary": "Создать короткие ссылки пакетно",
+                "parameters": [
+                    {
+                        "description": "Массив данных для создания коротких ссылок",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/batch.URLRequest"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Короткие ссылки успешно созданы",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/batch.URLResponse"
+                            }
                         }
                     },
                     "400": {
@@ -201,7 +262,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "shorten.CreatingShortLinksDTOIn": {
+        "batch.URLRequest": {
+            "type": "object",
+            "required": [
+                "correlation_id",
+                "original_url"
+            ],
+            "properties": {
+                "correlation_id": {
+                    "description": "CorrelationID - уникальный идентификатор для корреляции запроса/ответа\nrequired: true\nexample: \"1\"",
+                    "type": "string"
+                },
+                "original_url": {
+                    "description": "OriginalURL - длинный URL для сокращения\nrequired: true\nexample: \"https://www.example.com/very/long/url/that/needs/to/be/shortened\"",
+                    "type": "string"
+                }
+            }
+        },
+        "batch.URLResponse": {
+            "type": "object",
+            "properties": {
+                "correlation_id": {
+                    "description": "CorrelationID - уникальный идентификатор для корреляции запроса/ответа\nexample: \"1\"",
+                    "type": "string"
+                },
+                "short_url": {
+                    "description": "ShortURL - сокращенный URL\nexample: \"http://localhost:8080/abc123\"",
+                    "type": "string"
+                }
+            }
+        },
+        "json.CreatingShortURLsDTOIn": {
             "type": "object",
             "required": [
                 "url"
@@ -213,7 +304,7 @@ const docTemplate = `{
                 }
             }
         },
-        "shorten.CreatingShortLinksDTOOut": {
+        "json.CreatingShortURLsDTOOut": {
             "type": "object",
             "properties": {
                 "result": {

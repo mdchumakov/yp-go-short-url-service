@@ -7,6 +7,7 @@ import (
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/handler/health"
 	urlExtractorHandler "yp-go-short-url-service/internal/handler/urls/extractor"
+	shortenBatchAPI "yp-go-short-url-service/internal/handler/urls/shortener/batch"
 	shortenAPI "yp-go-short-url-service/internal/handler/urls/shortener/json"
 	urlShortenerHandler "yp-go-short-url-service/internal/handler/urls/shortener/text"
 	"yp-go-short-url-service/internal/middleware"
@@ -26,13 +27,14 @@ import (
 )
 
 type App struct {
-	router               *gin.Engine
-	shortLinksHandler    handler.Handler
-	shortLinksHandlerAPI handler.Handler
-	fullLinkHandler      handler.Handler
-	pingHandler          handler.Handler
-	settings             *config.Settings
-	logger               *zap.SugaredLogger
+	router                    *gin.Engine
+	shortLinksHandler         handler.Handler
+	shortLinksHandlerAPI      handler.Handler
+	shortLinksBatchHandlerAPI handler.Handler
+	fullLinkHandler           handler.Handler
+	pingHandler               handler.Handler
+	settings                  *config.Settings
+	logger                    *zap.SugaredLogger
 }
 
 func NewApp(logger *zap.SugaredLogger) *App {
@@ -53,22 +55,24 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	}
 
 	pingService := healthService.NewHealthCheckService(repoURLs)
-	URLShortenerService := urlShortenerService.NewLinkShortenerService(repoURLs)
+	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs)
 	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
 	URLShortenerHandler := urlShortenerHandler.NewCreatingShortLinksHandler(URLShortenerService, settings)
-	URLShortenerAPIHandler := shortenAPI.NewCreatingShortLinksAPIHandler(URLShortenerService, settings)
+	URLShortenerAPIHandler := shortenAPI.NewCreatingShortURLsAPIHandler(URLShortenerService, settings)
+	URLShortenerBatchAPIHandler := shortenBatchAPI.NewCreatingShortURLsByBatchAPIHandler(URLShortenerService, settings)
 	healthHandler := health.NewPingHandler(pingService)
 
 	return &App{
-		router:               router,
-		shortLinksHandler:    URLShortenerHandler,
-		shortLinksHandlerAPI: URLShortenerAPIHandler,
-		fullLinkHandler:      URLExtractorHandler,
-		pingHandler:          healthHandler,
-		settings:             settings,
-		logger:               logger,
+		router:                    router,
+		shortLinksHandler:         URLShortenerHandler,
+		shortLinksHandlerAPI:      URLShortenerAPIHandler,
+		shortLinksBatchHandlerAPI: URLShortenerBatchAPIHandler,
+		fullLinkHandler:           URLExtractorHandler,
+		pingHandler:               healthHandler,
+		settings:                  settings,
+		logger:                    logger,
 	}
 }
 
@@ -83,6 +87,7 @@ func (a *App) SetupRoutes() {
 	a.router.GET("/:shortURL", a.fullLinkHandler.Handle)
 	a.router.POST("/", a.shortLinksHandler.Handle)
 	a.router.POST("/api/shorten", a.shortLinksHandlerAPI.Handle)
+	a.router.POST("/api/shorten/batch", a.shortLinksBatchHandlerAPI.Handle)
 	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 

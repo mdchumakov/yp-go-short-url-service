@@ -13,16 +13,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type creatingShortLinksAPIHandler struct {
+type creatingShortURLsAPIHandler struct {
 	service service.LinkShortenerService
 	baseURL string
 }
 
-func NewCreatingShortLinksAPIHandler(
+func NewCreatingShortURLsAPIHandler(
 	service service.LinkShortenerService,
 	settings *config.Settings,
 ) handler.Handler {
-	return &creatingShortLinksAPIHandler{
+	return &creatingShortURLsAPIHandler{
 		service: service,
 		baseURL: settings.GetBaseURL(),
 	}
@@ -34,13 +34,13 @@ func NewCreatingShortLinksAPIHandler(
 // @Tags shortener
 // @Accept json
 // @Produce json
-// @Param request body CreatingShortLinksDTOIn true "Данные для создания короткой ссылки"
-// @Success 201 {object} CreatingShortLinksDTOOut "Короткая ссылка успешно создана"
+// @Param request body CreatingShortURLsDTOIn true "Данные для создания короткой ссылки"
+// @Success 201 {object} CreatingShortURLsDTOOut "Короткая ссылка успешно создана"
 // @Failure 400 {object} map[string]interface{} "Неверный запрос"
 // @Failure 415 {object} map[string]interface{} "Неподдерживаемый тип контента"
 // @Failure 500 {object} map[string]interface{} "Внутренняя ошибка сервера"
 // @Router /api/shorten [post]
-func (h *creatingShortLinksAPIHandler) Handle(c *gin.Context) {
+func (h *creatingShortURLsAPIHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
 	requestID := middleware.ExtractRequestID(c)
 
@@ -50,7 +50,7 @@ func (h *creatingShortLinksAPIHandler) Handle(c *gin.Context) {
 		"remote_addr", c.Request.RemoteAddr,
 		"request_id", requestID)
 
-	var dtoIn CreatingShortLinksDTOIn
+	var dtoIn CreatingShortURLsDTOIn
 
 	contentType := c.GetHeader("Content-Type")
 
@@ -113,7 +113,7 @@ func (h *creatingShortLinksAPIHandler) Handle(c *gin.Context) {
 		"result_url", resultURL,
 		"request_id", requestID)
 
-	dtoOut := CreatingShortLinksDTOOut{Result: resultURL}
+	dtoOut := CreatingShortURLsDTOOut{Result: resultURL}
 	// Если бы не авто-тесты в CI сделал бы так:
 	// c.JSON(http.StatusCreated, dtoOut)
 	jsonData, err := json.Marshal(dtoOut)
@@ -128,7 +128,7 @@ func (h *creatingShortLinksAPIHandler) Handle(c *gin.Context) {
 	c.Data(http.StatusCreated, "application/json", jsonData)
 }
 
-func (h *creatingShortLinksAPIHandler) buildShortURL(shortedURL string) string {
+func (h *creatingShortURLsAPIHandler) buildShortURL(shortedURL string) string {
 	return fmt.Sprintf(
 		"%s/%s",
 		strings.TrimRight(h.baseURL, "/"),

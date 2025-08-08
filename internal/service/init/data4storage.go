@@ -129,38 +129,20 @@ func (d *dataInitializerService) extractURLSDataFromFileStorage(filePath string)
 }
 
 func (d *dataInitializerService) saveURLsDataToDB(ctx context.Context, urls []*model.URLsModel) error {
-	successCount, skippedCount := 0, 0
-
-	for _, url := range urls {
-		if err := d.repo.Create(ctx, url); err != nil {
-			switch {
-			case repository.IsExistsError(err):
-				// URL уже существует, пропускаем
-				skippedCount++
-				d.logger.Debugw("URL already exists, skipping",
-					"short_url", url.ShortURL,
-					"long_url", url.LongURL)
-				continue
-			default:
-				d.logger.Errorw("Failed to save URL to DB",
-					"error", err,
-					"short_url", url.ShortURL,
-					"long_url", url.LongURL)
-				return err
-			}
-		}
-
-		successCount++
-		d.logger.Debugw("Successfully saved URL to DB",
-			"short_url", url.ShortURL,
-			"long_url", url.LongURL)
+	if len(urls) == 0 {
+		d.logger.Info("No URLs to save to DB")
+		return nil
 	}
 
-	d.logger.Infow("Finished saving URLs to DB",
-		"total", len(urls),
-		"success", successCount,
-		"skipped", skippedCount,
-	)
+	d.logger.Infow("Starting batch save to DB", "total", len(urls))
 
+	// Используем batch операцию для лучшей производительности
+	err := d.repo.CreateBatch(ctx, urls)
+	if err != nil {
+		d.logger.Errorw("Failed to save URLs batch to DB", "error", err)
+		return err
+	}
+
+	d.logger.Infow("Successfully saved URLs batch to DB", "total", len(urls))
 	return nil
 }

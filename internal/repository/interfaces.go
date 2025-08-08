@@ -22,4 +22,5 @@ type URLRepositoryReader interface {
 
 type URLRepositoryWriter interface {
 	Create(ctx context.Context, url *model.URLsModel) error
+	CreateBatch(ctx context.Context, urls []*model.URLsModel) error
 }

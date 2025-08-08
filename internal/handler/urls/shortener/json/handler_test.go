@@ -45,7 +45,7 @@ func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockLinkShortenerService
 	mockService := mock.NewMockLinkShortenerService(ctrl)
 	settings := getDefaultSettings()
 
-	handler := NewCreatingShortLinksAPIHandler(mockService, settings)
+	handler := NewCreatingShortURLsAPIHandler(mockService, settings)
 
 	// Создаем роутер с middleware для логгера
 	logger, _ := zap.NewDevelopment()
@@ -63,10 +63,10 @@ func TestNewCreatingShortLinksAPIHandler(t *testing.T) {
 	mockService := mock.NewMockLinkShortenerService(ctrl)
 	settings := getDefaultSettings()
 
-	handler := NewCreatingShortLinksAPIHandler(mockService, settings)
+	handler := NewCreatingShortURLsAPIHandler(mockService, settings)
 
 	assert.NotNil(t, handler)
-	assert.IsType(t, &creatingShortLinksAPIHandler{}, handler)
+	assert.IsType(t, &creatingShortURLsAPIHandler{}, handler)
 }
 
 func TestCreatingShortLinksAPIHandler_Handle_MissingContentType(t *testing.T) {
@@ -207,7 +207,7 @@ func TestCreatingShortLinksAPIHandler_Handle_Success(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
-	var response CreatingShortLinksDTOOut
+	var response CreatingShortURLsDTOOut
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedResultURL, response.Result)
@@ -232,7 +232,7 @@ func TestCreatingShortLinksAPIHandler_Handle_SuccessWithTrailingSlash(t *testing
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	var response CreatingShortLinksDTOOut
+	var response CreatingShortURLsDTOOut
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedResultURL, response.Result)
@@ -263,7 +263,7 @@ func TestCreatingShortLinksAPIHandler_Handle_ContextWithLogger(t *testing.T) {
 }
 
 func TestCreatingShortLinksAPIHandler_buildShortURL(t *testing.T) {
-	handler := &creatingShortLinksAPIHandler{
+	handler := &creatingShortURLsAPIHandler{
 		baseURL: "http://testhost:1234/",
 	}
 
@@ -298,7 +298,7 @@ func TestCreatingShortLinksAPIHandler_buildShortURL(t *testing.T) {
 }
 
 func TestCreatingShortLinksAPIHandler_buildShortURL_WithoutTrailingSlash(t *testing.T) {
-	handler := &creatingShortLinksAPIHandler{
+	handler := &creatingShortURLsAPIHandler{
 		baseURL: "http://testhost:1234", // без trailing slash
 	}
 
@@ -491,7 +491,7 @@ func TestCreatingShortLinksAPIHandler_Handle_JSONMarshalError(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 
-	var response CreatingShortLinksDTOOut
+	var response CreatingShortURLsDTOOut
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "http://testhost:1234/abc123", response.Result)

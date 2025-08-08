@@ -550,3 +550,121 @@ func TestURLsRepository_GetTotalCount_DatabaseError(t *testing.T) {
 	assert.Equal(t, int64(0), result)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestURLsRepository_CreateBatch_Success(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        2,
+			ShortURL:  "def456",
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	// Ожидаем начало транзакции
+	mock.ExpectBegin()
+
+	// Ожидаем batch операции - параметры в правильном порядке: short_url, long_url, created_at, updated_at
+	for _, url := range urls {
+		mock.ExpectExec("INSERT INTO urls \\(short_url, long_url, created_at, updated_at\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) ON CONFLICT \\(short_url\\) DO NOTHING").
+			WithArgs(url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt).
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	}
+
+	// Ожидаем подтверждение транзакции
+	mock.ExpectCommit()
+
+	err := repo.CreateBatch(ctx, urls)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_CreateBatch_EmptySlice(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+
+	err := repo.CreateBatch(ctx, []*model.URLsModel{})
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_CreateBatch_WithNilURLs(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		nil, // nil URL
+		{
+			ID:        2,
+			ShortURL:  "def456",
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	// Ожидаем начало транзакции
+	mock.ExpectBegin()
+
+	// Ожидаем batch операции только для не-nil URL - параметры в правильном порядке
+	validURLs := []*model.URLsModel{urls[0], urls[2]}
+	for _, url := range validURLs {
+		mock.ExpectExec("INSERT INTO urls \\(short_url, long_url, created_at, updated_at\\) VALUES \\(\\$1, \\$2, \\$3, \\$4\\) ON CONFLICT \\(short_url\\) DO NOTHING").
+			WithArgs(url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt).
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	}
+
+	// Ожидаем подтверждение транзакции
+	mock.ExpectCommit()
+
+	err := repo.CreateBatch(ctx, urls)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_CreateBatch_TransactionError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	urls := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	expectedErr := errors.New("transaction error")
+
+	// Ожидаем ошибку при начале транзакции
+	mock.ExpectBegin().WillReturnError(expectedErr)
+
+	err := repo.CreateBatch(ctx, urls)
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}

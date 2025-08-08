@@ -2,23 +2,88 @@ package shortener
 
 import (
 	"context"
+	"time"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/service"
 )
 
-type linkShortenerService struct {
-	repository repository.URLRepository
-}
-
-func NewLinkShortenerService(repository repository.URLRepository) service.LinkShortenerService {
-	return &linkShortenerService{
+func NewURLShortenerService(repository repository.URLRepository) service.LinkShortenerService {
+	return &urlShortenerService{
 		repository: repository,
 	}
 }
 
-func (s *linkShortenerService) ShortURL(ctx context.Context, longURL string) (string, error) {
+type urlShortenerService struct {
+	repository repository.URLRepository
+}
+
+func (s *urlShortenerService) ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error) {
+	logger := middleware.GetLogger(ctx)
+	requestID := middleware.ExtractRequestID(ctx)
+
+	var urlsForCreation []*model.URLsModel
+	for _, longURLItem := range longURLs {
+		_, longURL := longURLItem["correlation_id"], longURLItem["original_url"]
+
+		logger.Infow("Starting URL shortening process",
+			"long_url", longURL,
+			"request_id", requestID,
+		)
+		shortURLFromStorage, err := s.extractShortURLIfExists(ctx, longURL)
+		if err != nil {
+			logger.Errorw("Failed to extract short URL from storage",
+				"error", err,
+				"long_url", longURL,
+				"request_id", requestID,
+			)
+			return nil, err
+		}
+
+		if shortURLFromStorage != nil {
+			logger.Infow("Short URL already exists in storage",
+				"short_url", *shortURLFromStorage,
+				"long_url", longURL,
+				"request_id", requestID,
+			)
+			longURLItem["short_url"] = *shortURLFromStorage
+			continue
+		}
+
+		shortURL := shortenURLBase62(longURL)
+		logger.Debugw("Generated short URL",
+			"short_url", shortURL,
+			"request_id", requestID,
+		)
+
+		// Добавляем short_url в результат
+		longURLItem["short_url"] = shortURL
+
+		newURL := model.URLsModel{
+			ShortURL:  shortURL,
+			LongURL:   longURL,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		urlsForCreation = append(urlsForCreation, &newURL)
+	}
+
+	if err := s.repository.CreateBatch(ctx, urlsForCreation); err != nil {
+		logger.Errorw("Failed to create URL records in database",
+			"error", err,
+			"request_id", requestID,
+		)
+		return nil, err
+	}
+
+	logger.Infow("URL records created successfully in database")
+
+	return longURLs, nil
+}
+
+func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (string, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
 
@@ -83,7 +148,7 @@ func (s *linkShortenerService) ShortURL(ctx context.Context, longURL string) (st
 	return newURL.ShortURL, nil
 }
 
-func (s *linkShortenerService) extractShortURLIfExists(ctx context.Context, longURL string) (*string, error) {
+func (s *urlShortenerService) extractShortURLIfExists(ctx context.Context, longURL string) (*string, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
 
@@ -110,7 +175,7 @@ func (s *linkShortenerService) extractShortURLIfExists(ctx context.Context, long
 	return &urlResponse.ShortURL, nil
 }
 
-func (s *linkShortenerService) saveShortURLToStorage(ctx context.Context, url *model.URLsModel) error {
+func (s *urlShortenerService) saveShortURLToStorage(ctx context.Context, url *model.URLsModel) error {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
 

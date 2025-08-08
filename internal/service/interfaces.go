@@ -8,6 +8,7 @@ import (
 
 type LinkShortenerService interface {
 	ShortURL(ctx context.Context, longURL string) (string, error)
+	ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error)
 }
 
 type LinkExtractorService interface {
