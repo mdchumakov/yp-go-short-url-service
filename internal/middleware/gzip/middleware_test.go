@@ -3,29 +3,22 @@ package gzip
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"yp-go-short-url-service/internal/config"
-	"yp-go-short-url-service/internal/config/db"
-	shortenAPI "yp-go-short-url-service/internal/handler/api/shorten"
+	json2 "yp-go-short-url-service/internal/handler/urls/shortener/json"
+	serviceMock "yp-go-short-url-service/internal/service/mock"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 const apiPath = "/api/shorten"
-
-type MockShortener struct {
-	mock.Mock
-}
-
-func (m *MockShortener) ShortenURL(longURL string) (string, error) {
-	args := m.Called(longURL)
-	return args.String(0), args.Error(1)
-}
 
 func getDefaultSettings() *config.Settings {
 	return &config.Settings{
@@ -37,9 +30,6 @@ func getDefaultSettings() *config.Settings {
 				ServerDomain:  "testdomain",
 				BaseURL:       "http://testhost:1234/",
 			},
-			SQLite: &db.SQLiteSettings{
-				SQLiteDBPath: "test.db",
-			},
 		},
 		Flags: &config.Flags{
 			ServerAddress: "testhost:1234",
@@ -49,6 +39,11 @@ func getDefaultSettings() *config.Settings {
 }
 
 func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
+	// Создаем контроллер для моков
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	r := gin.New()
@@ -59,15 +54,18 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	expectedShortURL := "abc123"
 	settings := getDefaultSettings()
 
-	mockService := new(MockShortener)
-	handler := shortenAPI.NewCreatingShortLinksAPI(mockService, settings)
+	mockService := serviceMock.NewMockLinkShortenerService(ctrl)
+	handler := json2.NewCreatingShortURLsAPIHandler(mockService, settings)
 
 	r.Use(Middleware(logger))
 
 	r.POST(apiPath, handler.Handle)
 
 	longURL := "https://ok.com"
-	mockService.On("ShortenURL", longURL).Return(expectedShortURL, nil)
+	mockService.EXPECT().
+		ShortURL(ctx, longURL).
+		Return(expectedShortURL, nil).
+		Times(1)
 
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
@@ -85,7 +83,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 
-	expectedBody := shortenAPI.CreatingShortLinksDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
+	expectedBody := json2.CreatingShortURLsDTOOut{Result: settings.GetBaseURL() + expectedShortURL}
 	expectedBodyJSON, _ := json.Marshal(expectedBody)
 
 	zr, _ := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))
@@ -96,5 +94,4 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Equal(t, string(expectedBodyJSON), string(data))
-	mockService.AssertExpectations(t)
 }
