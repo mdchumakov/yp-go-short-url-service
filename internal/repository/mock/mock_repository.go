@@ -49,6 +49,21 @@ func (mr *MockURLRepositoryMockRecorder) Create(ctx, url interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockURLRepository)(nil).Create), ctx, url)
 }
 
+// GetAll mocks base method.
+func (m *MockURLRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll", ctx, limit, offset)
+	ret0, _ := ret[0].([]*model.URLsModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockURLRepositoryMockRecorder) GetAll(ctx, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockURLRepository)(nil).GetAll), ctx, limit, offset)
+}
+
 // GetByLongURL mocks base method.
 func (m *MockURLRepository) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	m.ctrl.T.Helper()
@@ -77,6 +92,21 @@ func (m *MockURLRepository) GetByShortURL(ctx context.Context, shortURL string) 
 func (mr *MockURLRepositoryMockRecorder) GetByShortURL(ctx, shortURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortURL", reflect.TypeOf((*MockURLRepository)(nil).GetByShortURL), ctx, shortURL)
+}
+
+// GetTotalCount mocks base method.
+func (m *MockURLRepository) GetTotalCount(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalCount", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalCount indicates an expected call of GetTotalCount.
+func (mr *MockURLRepositoryMockRecorder) GetTotalCount(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalCount", reflect.TypeOf((*MockURLRepository)(nil).GetTotalCount), ctx)
 }
 
 // Ping mocks base method.
@@ -116,6 +146,21 @@ func (m *MockURLRepositoryReader) EXPECT() *MockURLRepositoryReaderMockRecorder 
 	return m.recorder
 }
 
+// GetAll mocks base method.
+func (m *MockURLRepositoryReader) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll", ctx, limit, offset)
+	ret0, _ := ret[0].([]*model.URLsModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockURLRepositoryReaderMockRecorder) GetAll(ctx, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockURLRepositoryReader)(nil).GetAll), ctx, limit, offset)
+}
+
 // GetByLongURL mocks base method.
 func (m *MockURLRepositoryReader) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +189,21 @@ func (m *MockURLRepositoryReader) GetByShortURL(ctx context.Context, shortURL st
 func (mr *MockURLRepositoryReaderMockRecorder) GetByShortURL(ctx, shortURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByShortURL", reflect.TypeOf((*MockURLRepositoryReader)(nil).GetByShortURL), ctx, shortURL)
+}
+
+// GetTotalCount mocks base method.
+func (m *MockURLRepositoryReader) GetTotalCount(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalCount", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalCount indicates an expected call of GetTotalCount.
+func (mr *MockURLRepositoryReaderMockRecorder) GetTotalCount(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalCount", reflect.TypeOf((*MockURLRepositoryReader)(nil).GetTotalCount), ctx)
 }
 
 // Ping mocks base method.

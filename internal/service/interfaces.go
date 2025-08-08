@@ -2,7 +2,9 @@
 
 package service
 
-import "context"
+import (
+	"context"
+)
 
 type LinkShortenerService interface {
 	ShortURL(ctx context.Context, longURL string) (string, error)
@@ -14,4 +16,8 @@ type LinkExtractorService interface {
 
 type HealthCheckService interface {
 	Ping(ctx context.Context) error
+}
+
+type DataInitializerService interface {
+	Setup(ctx context.Context, fileStoragePath string) error
 }

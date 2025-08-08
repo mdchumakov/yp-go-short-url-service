@@ -26,6 +26,9 @@ func (s *linkExtractorService) ExtractLongURL(ctx context.Context, shortURL stri
 
 	url, err := s.repository.GetByShortURL(ctx, shortURL)
 	if err != nil {
+		if repository.IsNotFoundError(err) {
+			return "", nil
+		}
 		logger.Errorw("Failed to extract long URL from storage",
 			"error", err,
 			"short_url", shortURL,

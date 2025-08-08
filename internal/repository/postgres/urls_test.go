@@ -358,3 +358,195 @@ func TestIsExistsError(t *testing.T) {
 		})
 	}
 }
+
+func TestURLsRepository_GetAll_Success(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	limit, offset := 10, 0
+
+	expectedURLs := []*model.URLsModel{
+		{
+			ID:        1,
+			ShortURL:  "abc123",
+			LongURL:   "https://example1.com",
+			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ID:        2,
+			ShortURL:  "def456",
+			LongURL:   "https://example2.com",
+			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	for _, url := range expectedURLs {
+		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+	}
+
+	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+		WithArgs(limit, offset).
+		WillReturnRows(rows)
+
+	result, err := repo.GetAll(ctx, limit, offset)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 2)
+	assert.Equal(t, expectedURLs[0].ID, result[0].ID)
+	assert.Equal(t, expectedURLs[0].ShortURL, result[0].ShortURL)
+	assert.Equal(t, expectedURLs[0].LongURL, result[0].LongURL)
+	assert.Equal(t, expectedURLs[1].ID, result[1].ID)
+	assert.Equal(t, expectedURLs[1].ShortURL, result[1].ShortURL)
+	assert.Equal(t, expectedURLs[1].LongURL, result[1].LongURL)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetAll_EmptyResult(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	limit, offset := 10, 0
+
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+
+	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+		WithArgs(limit, offset).
+		WillReturnRows(rows)
+
+	result, err := repo.GetAll(ctx, limit, offset)
+	assert.NoError(t, err)
+	assert.Len(t, result, 0)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetAll_WithPagination(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	limit, offset := 5, 10
+
+	expectedURLs := []*model.URLsModel{
+		{
+			ID:        11,
+			ShortURL:  "xyz789",
+			LongURL:   "https://example11.com",
+			CreatedAt: time.Date(2023, 1, 11, 0, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2023, 1, 11, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	for _, url := range expectedURLs {
+		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+	}
+
+	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+		WithArgs(limit, offset).
+		WillReturnRows(rows)
+
+	result, err := repo.GetAll(ctx, limit, offset)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
+	assert.Equal(t, expectedURLs[0].ID, result[0].ID)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetAll_DatabaseError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	limit, offset := 10, 0
+	expectedErr := errors.New("database connection error")
+
+	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+		WithArgs(limit, offset).
+		WillReturnError(expectedErr)
+
+	result, err := repo.GetAll(ctx, limit, offset)
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, result)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetAll_ScanError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	limit, offset := 10, 0
+
+	// Создаем строки с неправильными типами данных для вызова ошибки сканирования
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"}).
+		AddRow("invalid_id", "abc123", "https://example.com", "invalid_date", "invalid_date")
+
+	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+		WithArgs(limit, offset).
+		WillReturnRows(rows)
+
+	result, err := repo.GetAll(ctx, limit, offset)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetTotalCount_Success(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	expectedCount := int64(42)
+
+	rows := pgxmock.NewRows([]string{"count"}).AddRow(expectedCount)
+
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+		WillReturnRows(rows)
+
+	result, err := repo.GetTotalCount(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedCount, result)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetTotalCount_ZeroCount(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	expectedCount := int64(0)
+
+	rows := pgxmock.NewRows([]string{"count"}).AddRow(expectedCount)
+
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+		WillReturnRows(rows)
+
+	result, err := repo.GetTotalCount(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedCount, result)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_GetTotalCount_DatabaseError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	expectedErr := errors.New("database connection error")
+
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+		WillReturnError(expectedErr)
+
+	result, err := repo.GetTotalCount(ctx)
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.Equal(t, int64(0), result)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}

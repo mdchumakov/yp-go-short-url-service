@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/kelseyhightower/envconfig"
 	"strings"
 	"yp-go-short-url-service/internal/config/db"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Settings struct {
@@ -15,6 +16,7 @@ type Settings struct {
 type ENVSettings struct {
 	Server      *ServerSettings
 	PG          *db.PGSettings
+	SQLite      *db.SQLiteSettings
 	FileStorage *db.FileStorageSettings
 }
 
@@ -95,7 +97,7 @@ func (s *Settings) GetFileStoragePath() string {
 	return db.DefaultFileStoragePath
 }
 
-func (s *Settings) GetDatabaseDSN() string {
+func (s *Settings) GetPostgresDSN() string {
 	// Если указана переменная окружения, то используется она
 	if dsn := strings.TrimSpace(s.EnvSettings.PG.DSN); dsn != "" {
 		return dsn
@@ -107,5 +109,5 @@ func (s *Settings) GetDatabaseDSN() string {
 	}
 
 	// Если нет ни переменной окружения, ни флага, то возвращается пустая строка
-	return db.DefaultPGDSN
+	return ""
 }

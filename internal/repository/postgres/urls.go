@@ -15,6 +15,7 @@ import (
 type PoolInterface interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 }
 
 type urlsRepository struct {
@@ -85,4 +86,48 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	}
 
 	return nil
+}
+
+func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
+	query := `SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+
+	rows, err := r.pool.Query(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []*model.URLsModel
+	for rows.Next() {
+		var url model.URLsModel
+		err := rows.Scan(
+			&url.ID,
+			&url.ShortURL,
+			&url.LongURL,
+			&url.CreatedAt,
+			&url.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, &url)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM urls`
+
+	var count int64
+	err := r.pool.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

@@ -11,9 +11,9 @@ import (
 	urlShortenerHandler "yp-go-short-url-service/internal/handler/urls/shortener/text"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/middleware/gzip"
-	"yp-go-short-url-service/internal/repository"
-	"yp-go-short-url-service/internal/repository/postgres"
+	baseRepo "yp-go-short-url-service/internal/repository/base"
 	healthService "yp-go-short-url-service/internal/service/health"
+	initService "yp-go-short-url-service/internal/service/init"
 	urlExtractorService "yp-go-short-url-service/internal/service/urls/extractor"
 	urlShortenerService "yp-go-short-url-service/internal/service/urls/shortener"
 
@@ -36,36 +36,20 @@ type App struct {
 }
 
 func NewApp(logger *zap.SugaredLogger) *App {
-	var err error
-
 	ctx := context.Background()
 
 	router := gin.Default()
 	settings := config.NewSettings()
 
-	// Пытаемся подключиться к PostgreSQL
-	pgPool, _ := db.InitPostgresDB(
-		ctx,
-		settings.GetDatabaseDSN(),
-	)
-
-	var repoURLs repository.URLRepository
-	// PostgreSQL доступен, запускаем миграции
-	err = db.RunMigrations(logger, pgPool, "migrations")
-	if err != nil {
-		logger.Warnw("PostgreSQL недоступен, переключаемся на SQLite", "error", err)
-
-		// Инициализируем SQLite
-		sqliteDB, err := db.SetupSQLiteDB("db/sqlite.db", logger)
-		if err != nil {
-			logger.Fatalw("не удалось инициализировать SQLite", "error", err)
-		}
-
-		repoURLs = db.NewSQLiteRepository(sqliteDB)
-		logger.Info("SQLite успешно инициализирован как fallback")
-	} else {
-		repoURLs = postgres.NewURLsRepository(pgPool)
-		logger.Info("PostgreSQL успешно инициализирован")
+	dbPool := db.Setup(ctx, logger, &db.SetupParams{
+		PostgresDSN:      settings.GetPostgresDSN(),
+		SQLiteDSN:        settings.EnvSettings.SQLite.SQLiteDBPath,
+		PGMigrationsPath: settings.EnvSettings.PG.MigrationsPath,
+	})
+	repoURLs := baseRepo.NewURLsRepository(dbPool)
+	InitService := initService.NewDataInitializerService(repoURLs, logger)
+	if err := InitService.Setup(ctx, settings.GetFileStoragePath()); err != nil {
+		logger.Fatalw("Failed to initialize data", "error", err)
 	}
 
 	pingService := healthService.NewHealthCheckService(repoURLs)

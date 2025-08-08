@@ -16,6 +16,8 @@ type URLRepositoryReader interface {
 	Ping(ctx context.Context) error
 	GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error)
 	GetByShortURL(ctx context.Context, shortURL string) (*model.URLsModel, error)
+	GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error)
+	GetTotalCount(ctx context.Context) (int64, error)
 }
 
 type URLRepositoryWriter interface {

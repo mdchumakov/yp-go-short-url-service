@@ -14,6 +14,7 @@ import (
 type DBInterface interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	PingContext(ctx context.Context) error
 }
 
@@ -86,4 +87,48 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	}
 
 	return nil
+}
+
+func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
+	query := `SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT ? OFFSET ?`
+
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []*model.URLsModel
+	for rows.Next() {
+		var url model.URLsModel
+		err := rows.Scan(
+			&url.ID,
+			&url.ShortURL,
+			&url.LongURL,
+			&url.CreatedAt,
+			&url.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, &url)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM urls`
+
+	var count int64
+	err := r.db.QueryRowContext(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

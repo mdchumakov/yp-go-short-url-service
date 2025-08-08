@@ -5,19 +5,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
-	"time"
 )
 
-const DefaultPGDSN string = "postgres://postgres:postgres@localhost:5432/postgres"
-
 type PGSettings struct {
-	DSN string `envconfig:"DATABASE_DSN"`
+	DSN            string `envconfig:"DATABASE_DSN"`
+	MigrationsPath string `envconfig:"MIGRATIONS_PATH" default:"migrations"`
 }
 
 func InitPostgresDB(ctx context.Context, pgDSN string) (*pgxpool.Pool, error) {
