@@ -49,34 +49,89 @@ func (h *creatingShortURLsByBatchAPIHandler) Handle(c *gin.Context) {
 		"path", c.Request.URL.Path,
 		"remote_addr", c.Request.RemoteAddr,
 		"request_id", requestID)
-	if err := h.validateContentType(c); err != nil {
+
+	// Валидация запроса
+	if err := h.validateRequest(c); err != nil {
 		return
 	}
 
+	// Обработка запроса
+	if err := h.processRequest(c); err != nil {
+		return
+	}
+}
+
+// validateRequest выполняет валидацию входящего запроса
+func (h *creatingShortURLsByBatchAPIHandler) validateRequest(c *gin.Context) error {
+	if err := h.validateContentType(c); err != nil {
+		return err
+	}
+
 	var dtoIn CreatingShortURLsByBatchDTOIn
-	if err := c.ShouldBindJSON(&dtoIn); err != nil {
+	if err := h.parseAndValidateDTO(c, &dtoIn); err != nil {
+		return err
+	}
+
+	// Сохраняем DTO в контексте для использования в processRequest
+	c.Set("dto_in", dtoIn)
+	return nil
+}
+
+// parseAndValidateDTO парсит и валидирует DTO
+func (h *creatingShortURLsByBatchAPIHandler) parseAndValidateDTO(c *gin.Context, dtoIn *CreatingShortURLsByBatchDTOIn) error {
+	logger := middleware.GetLogger(c.Request.Context())
+	requestID := middleware.ExtractRequestID(c.Request.Context())
+
+	if err := c.ShouldBindJSON(dtoIn); err != nil {
 		logger.Warnw("Invalid JSON in request body",
 			"error", err,
 			"request_id", requestID,
 			"remote_addr", c.Request.RemoteAddr)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
-	if err := h.validateDTOIn(dtoIn); err != nil {
+	if err := h.validateDTOIn(*dtoIn); err != nil {
 		logger.Warnw("Invalid request body",
 			"error", err,
 			"request_id", requestID,
 			"remote_addr", c.Request.RemoteAddr,
 		)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return err
 	}
+
+	return nil
+}
+
+// processRequest обрабатывает валидированный запрос
+func (h *creatingShortURLsByBatchAPIHandler) processRequest(c *gin.Context) error {
+	logger := middleware.GetLogger(c.Request.Context())
+	requestID := middleware.ExtractRequestID(c.Request.Context())
+
+	// Получаем DTO из контекста
+	dtoInInterface, _ := c.Get("dto_in")
+	dtoIn := dtoInInterface.(CreatingShortURLsByBatchDTOIn)
 
 	logger.Infow("Processing URL shortening request",
 		"dto_in", dtoIn,
 		"request_id", requestID,
 	)
+
+	// Создаем короткие URL'ы
+	shortedURLs, err := h.createShortURLs(c, dtoIn)
+	if err != nil {
+		return err
+	}
+
+	// Формируем ответ
+	return h.buildResponse(c, shortedURLs)
+}
+
+// createShortURLs создает короткие URL'ы через сервис
+func (h *creatingShortURLsByBatchAPIHandler) createShortURLs(c *gin.Context, dtoIn CreatingShortURLsByBatchDTOIn) ([]map[string]string, error) {
+	logger := middleware.GetLogger(c.Request.Context())
+	requestID := middleware.ExtractRequestID(c.Request.Context())
 
 	shortedURLs, err := h.service.ShortURLsByBatch(c.Request.Context(), dtoIn.ToMapSlice())
 	if err != nil {
@@ -86,21 +141,30 @@ func (h *creatingShortURLsByBatchAPIHandler) Handle(c *gin.Context) {
 			"remote_addr", c.Request.RemoteAddr,
 		)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
-	logger.Infow("URL shortened successfully")
 
-	if err = h.buildShortURL(shortedURLs); err != nil {
+	logger.Infow("URL shortened successfully")
+	return shortedURLs, nil
+}
+
+// buildResponse формирует и отправляет ответ клиенту
+func (h *creatingShortURLsByBatchAPIHandler) buildResponse(c *gin.Context, shortedURLs []map[string]string) error {
+	logger := middleware.GetLogger(c.Request.Context())
+	requestID := middleware.ExtractRequestID(c.Request.Context())
+
+	// Добавляем базовый URL к коротким URL'ам
+	if err := h.buildShortURL(shortedURLs); err != nil {
 		logger.Errorw("Failed to build short URL",
 			"error", err,
 			"request_id", requestID,
 			"remote_addr", c.Request.RemoteAddr,
 		)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
-	// Преобразуем []map[string]string в CreatingShortURLsByBatchDTOOut
+	// Преобразуем в DTO для ответа
 	dtoOut := h.convertToDTOOut(shortedURLs)
 
 	logger.Infow("URLs shortened successfully",
@@ -108,6 +172,7 @@ func (h *creatingShortURLsByBatchAPIHandler) Handle(c *gin.Context) {
 		"request_id", requestID)
 
 	c.JSON(http.StatusCreated, dtoOut)
+	return nil
 }
 
 func (h *creatingShortURLsByBatchAPIHandler) validateContentType(c *gin.Context) error {
