@@ -6,6 +6,7 @@ type Flags struct {
 	ServerAddress   string
 	BaseURL         string
 	FileStoragePath string
+	DatabaseDSN     string
 }
 
 func NewFlags() *Flags {
@@ -28,11 +29,18 @@ func NewFlags() *Flags {
 			"Имя файла для значения по умолчанию придумайте сами.",
 	)
 
+	databaseDSN := flag.String(
+		"d",
+		"",
+		"Строка с адресом подключения к БД",
+	)
+
 	flag.Parse()
 
 	return &Flags{
 		ServerAddress:   *connectionAddr,
 		BaseURL:         *redirectURL,
 		FileStoragePath: *fileStoragePath,
+		DatabaseDSN:     *databaseDSN,
 	}
 }

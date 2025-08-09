@@ -1,0 +1,234 @@
+basePath: /
+definitions:
+  batch.URLRequest:
+    properties:
+      correlation_id:
+        description: |-
+          CorrelationID - уникальный идентификатор для корреляции запроса/ответа
+          required: true
+          example: "1"
+        type: string
+      original_url:
+        description: |-
+          OriginalURL - длинный URL для сокращения
+          required: true
+          example: "https://www.example.com/very/long/url/that/needs/to/be/shortened"
+        type: string
+    required:
+    - correlation_id
+    - original_url
+    type: object
+  batch.URLResponse:
+    properties:
+      correlation_id:
+        description: |-
+          CorrelationID - уникальный идентификатор для корреляции запроса/ответа
+          example: "1"
+        type: string
+      short_url:
+        description: |-
+          ShortURL - сокращенный URL
+          example: "http://localhost:8080/abc123"
+        type: string
+    type: object
+  json.CreatingShortURLsDTOIn:
+    properties:
+      url:
+        description: |-
+          URL - длинный URL для сокращения
+          required: true
+          example: "https://www.example.com/very/long/url/that/needs/to/be/shortened"
+        type: string
+    required:
+    - url
+    type: object
+  json.CreatingShortURLsDTOOut:
+    properties:
+      result:
+        description: |-
+          Result - сокращенный URL
+          example: "http://localhost:8080/abc123"
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Сервис для сокращения длинных URL-адресов
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: URL Shortener Service API
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - text/plain
+      description: Создает короткую ссылку из длинного URL, отправленного в текстовом
+        формате
+      parameters:
+      - description: Длинный URL для сокращения
+        in: body
+        name: url
+        required: true
+        schema:
+          type: string
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Сокращенный URL
+          schema:
+            type: string
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "409":
+          description: URL уже существует в системе
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Создать короткую ссылку (текстовый формат)
+      tags:
+      - shortener
+  /{shortURL}:
+    get:
+      consumes:
+      - text/plain
+      description: Перенаправляет пользователя на оригинальный длинный URL по короткой
+        ссылке
+      parameters:
+      - description: Короткий URL
+        example: abc123
+        in: path
+        name: shortURL
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "307":
+          description: Перенаправление на длинный URL
+          schema:
+            type: string
+        "400":
+          description: Неверный запрос
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Перенаправление на длинный URL
+      tags:
+      - redirect
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: Создает короткую ссылку из длинного URL
+      parameters:
+      - description: Данные для создания короткой ссылки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/json.CreatingShortURLsDTOIn'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Короткая ссылка успешно создана
+          schema:
+            $ref: '#/definitions/json.CreatingShortURLsDTOOut'
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: URL уже существует в системе
+          schema:
+            $ref: '#/definitions/json.CreatingShortURLsDTOOut'
+        "415":
+          description: Неподдерживаемый тип контента
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Создать короткую ссылку
+      tags:
+      - shortener
+  /api/shorten/batch:
+    post:
+      consumes:
+      - application/json
+      description: Создает короткие ссылки из массива длинных URL-ов
+      parameters:
+      - description: Массив данных для создания коротких ссылок
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/batch.URLRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Короткие ссылки успешно созданы
+          schema:
+            items:
+              $ref: '#/definitions/batch.URLResponse'
+            type: array
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties: true
+            type: object
+        "415":
+          description: Неподдерживаемый тип контента
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Создать короткие ссылки пакетно
+      tags:
+      - shortener
+  /ping:
+    get:
+      consumes:
+      - text/plain
+      description: Проверяет доступность базы данных и возвращает статус сервиса
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+        "500":
+          description: health check failed
+          schema:
+            type: string
+      summary: Проверка здоровья сервиса
+      tags:
+      - health
+swagger: "2.0"
