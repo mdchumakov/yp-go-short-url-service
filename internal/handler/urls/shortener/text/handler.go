@@ -46,6 +46,12 @@ func NewCreatingShortLinksHandler(
 func (h *CreatingShortLinks) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
 	requestID := middleware.ExtractRequestID(c.Request.Context())
+	user := middleware.GetJWTUserFromContext(c.Request.Context())
+	if user == nil {
+		logger.Errorw("JWT user is nil", "request_id", requestID)
+		c.String(http.StatusInternalServerError, "Ошибка аутентификации пользователя")
+		return
+	}
 
 	contentType := c.GetHeader("Content-Type")
 
@@ -69,7 +75,7 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 		return
 	}
 
-	shortedURL, err := h.service.ShortURL(c, longURL)
+	shortedURL, err := h.service.ShortURL(c.Request.Context(), longURL)
 	if err != nil {
 		if shortener.IsAlreadyExistsError(err) && shortedURL != "" {
 			logger.Warnw("URL already exists in storage", "long_url", longURL, "request_id", requestID)

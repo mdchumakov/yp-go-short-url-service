@@ -50,6 +50,22 @@ definitions:
           example: "http://localhost:8080/abc123"
         type: string
     type: object
+  user.UserURLResponse:
+    description: Ответ с URL пользователя
+    properties:
+      original_url:
+        description: |-
+          @Description Оригинальный длинный URL
+          @Example https://www.example.com/very/long/url/that/needs/to/be/shortened
+        example: https://www.example.com/very/long/url/that/needs/to/be/shortened
+        type: string
+      short_url:
+        description: |-
+          @Description Сокращенный URL пользователя
+          @Example http://localhost:8080/abc123
+        example: http://localhost:8080/abc123
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -212,6 +228,44 @@ paths:
       summary: Создать короткие ссылки пакетно
       tags:
       - shortener
+  /api/user/urls:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все URL пользователя. Требует JWT аутентификации. JWT
+        токен должен быть передан через заголовок Authorization в формате 'Bearer
+        <token>' или через куки с именем 'token'.
+      parameters:
+      - description: JWT токен в заголовке Authorization (Bearer <token>)
+        in: header
+        name: Authorization
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список URL пользователя успешно получен
+          schema:
+            items:
+              $ref: '#/definitions/user.UserURLResponse'
+            type: array
+        "204":
+          description: У пользователя нет URL
+          schema:
+            items:
+              $ref: '#/definitions/user.UserURLResponse'
+            type: array
+        "401":
+          description: Не авторизован - JWT токен отсутствует или недействителен
+          schema:
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: object
+      summary: Получить URL пользователя
+      tags:
+      - user
   /ping:
     get:
       consumes:

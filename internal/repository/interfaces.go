@@ -4,6 +4,7 @@ package repository
 
 import (
 	"context"
+	"time"
 	"yp-go-short-url-service/internal/model"
 )
 
@@ -23,4 +24,32 @@ type URLRepositoryReader interface {
 type URLRepositoryWriter interface {
 	Create(ctx context.Context, url *model.URLsModel) error
 	CreateBatch(ctx context.Context, urls []*model.URLsModel) error
+}
+
+type UserRepository interface {
+	UserRepositoryReader
+	UserRepositoryCreator
+}
+
+type UserRepositoryCreator interface {
+	CreateUser(ctx context.Context, username, password string, expiresAt *time.Time) (*model.UserModel, error)
+}
+
+type UserRepositoryReader interface {
+	GetUserByID(ctx context.Context, userID string) (*model.UserModel, error)
+	GetUserByName(ctx context.Context, username string) (*model.UserModel, error)
+}
+
+type UserURLsRepository interface {
+	UserURLsRepositoryReader
+	UserURLsRepositoryWriter
+}
+
+type UserURLsRepositoryReader interface {
+	GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error)
+}
+
+type UserURLsRepositoryWriter interface {
+	CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error
+	CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error
 }

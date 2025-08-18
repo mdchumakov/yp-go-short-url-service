@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrURLNotFound = errors.New("URL не найден")
-	ErrURLExists   = errors.New("URL уже существует")
+	ErrURLNotFound  = errors.New("URL не найден")
+	ErrURLExists    = errors.New("URL уже существует")
+	ErrUserNotFound = errors.New("пользователь не найден")
 )
 
 // IsNotFoundError проверяет, является ли ошибка ошибкой "не найдено"

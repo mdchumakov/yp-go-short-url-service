@@ -9,12 +9,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ExtractingLongURLHandler struct {
+type extractingLongURLHandler struct {
 	service service.LinkExtractorService
 }
 
 func NewExtractingFullLinkHandler(service service.LinkExtractorService) handler.Handler {
-	return &ExtractingLongURLHandler{
+	return &extractingLongURLHandler{
 		service: service,
 	}
 }
@@ -30,7 +30,7 @@ func NewExtractingFullLinkHandler(service service.LinkExtractorService) handler.
 // @Failure 400 {string} string "Неверный запрос"
 // @Failure 500 {string} string "Внутренняя ошибка сервера"
 // @Router /{shortURL} [get]
-func (h *ExtractingLongURLHandler) Handle(c *gin.Context) {
+func (h *extractingLongURLHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
 	requestID := middleware.ExtractRequestID(c.Request.Context())
 

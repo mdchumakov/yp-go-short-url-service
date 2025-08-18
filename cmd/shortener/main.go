@@ -28,7 +28,7 @@ func main() {
 
 	service := app.NewApp(logger)
 
-	service.SetupMiddlewares()
+	service.SetupCommonMiddlewares()
 	service.SetupRoutes()
 
 	err = service.Run()

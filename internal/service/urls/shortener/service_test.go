@@ -42,7 +42,7 @@ func Test_linkShortenerService_ShortURL(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -198,7 +198,7 @@ func Test_linkShortenerService_ShortURL_EdgeCases(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -293,7 +293,7 @@ func Test_linkShortenerService_extractShortURLIfExists(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -366,7 +366,7 @@ func Test_linkShortenerService_saveShortURLToStorage(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -418,7 +418,7 @@ func Test_urlShortenerService_ShortURLsByBatch(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -680,7 +680,7 @@ func Test_urlShortenerService_ShortURL_ConflictScenarios(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		repository: mockRepo,
+		urlRepository: mockRepo,
 	}
 
 	// Создаем контекст с логгером для тестов
