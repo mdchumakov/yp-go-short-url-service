@@ -13,8 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// jwtContextKey - тип для ключа контекста JWT
+type jwtContextKey string
+
+func (k jwtContextKey) String() string {
+	return string(k)
+}
+
 const (
-	JWTTokenContextKey  = "jwt_user"
+	JWTTokenContextKey  = jwtContextKey("jwt_user")
 	AuthorizationHeader = "Authorization"
 	BearerPrefix        = "Bearer "
 )

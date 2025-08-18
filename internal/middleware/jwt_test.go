@@ -136,7 +136,9 @@ func TestSetJWTCookie(t *testing.T) {
 	setJWTCookie(c, token, jwtSettings, logger, "test_request_id")
 
 	// Проверяем, что куки установлены
-	cookies := w.Result().Cookies()
+	result := w.Result()
+	defer result.Body.Close()
+	cookies := result.Cookies()
 	assert.Len(t, cookies, 1)
 
 	cookie := cookies[0]
@@ -171,7 +173,9 @@ func TestClearJWTCookie(t *testing.T) {
 	ClearJWTCookie(c, jwtSettings)
 
 	// Проверяем, что куки установлены с отрицательным временем жизни
-	cookies := w.Result().Cookies()
+	result := w.Result()
+	defer result.Body.Close()
+	cookies := result.Cookies()
 	assert.Len(t, cookies, 1)
 
 	cookie := cookies[0]
