@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
 )
@@ -84,7 +85,7 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	err = tx.QueryRowContext(ctx, urlQuery, url.ShortURL, url.LongURL).Scan(&url.ID)
 	if err != nil {
 		// Проверяем на дублирование записи в SQLite
-		if err.Error() == "UNIQUE constraint failed" {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return repository.ErrURLExists
 		}
 		return fmt.Errorf("failed to insert url: %w", err)
@@ -95,7 +96,7 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
 	if err != nil {
 		// Проверяем на дублирование записи в SQLite
-		if err.Error() == "UNIQUE constraint failed" {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return repository.ErrURLExists
 		}
 		return fmt.Errorf("failed to link url to user: %w", err)
@@ -148,7 +149,7 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 		err = tx.QueryRowContext(ctx, urlQuery, url.ShortURL, url.LongURL).Scan(&url.ID)
 		if err != nil {
 			// Проверяем на дублирование записи в SQLite
-			if err.Error() == "UNIQUE constraint failed" {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 				return repository.ErrURLExists
 			}
 			return fmt.Errorf("failed to insert url %s: %w", url.ShortURL, err)
@@ -158,7 +159,7 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 		_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
 		if err != nil {
 			// Проверяем на дублирование записи в SQLite
-			if err.Error() == "UNIQUE constraint failed" {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 				return repository.ErrURLExists
 			}
 			return fmt.Errorf("failed to link url %s to user: %w", url.ShortURL, err)

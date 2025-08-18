@@ -7,6 +7,7 @@ import (
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,28 +36,10 @@ func TestUserURLsRepository_GetByUserID(t *testing.T) {
 		LongURL:  "https://example.com/2",
 	}
 
-	// Добавляем URL в таблицу urls
-	_, err = db.ExecContext(ctx, `INSERT INTO urls (short_url, long_url) VALUES (?, ?)`,
-		url1.ShortURL, url1.LongURL)
-	require.NoError(t, err)
-	_, err = db.ExecContext(ctx, `INSERT INTO urls (short_url, long_url) VALUES (?, ?)`,
-		url2.ShortURL, url2.LongURL)
-	require.NoError(t, err)
-
-	// Получаем ID созданных URL
-	var url1ID, url2ID uint
-	err = db.QueryRowContext(ctx, `SELECT id FROM urls WHERE short_url = ?`, url1.ShortURL).Scan(&url1ID)
-	require.NoError(t, err)
-	err = db.QueryRowContext(ctx, `SELECT id FROM urls WHERE short_url = ?`, url2.ShortURL).Scan(&url2ID)
-	require.NoError(t, err)
-
-	url1.ID = url1ID
-	url2.ID = url2ID
-
 	// Связываем URL с пользователем
-	err = repo.AddURL(ctx, userID, url1)
+	err = repo.CreateURLWithUser(ctx, url1, userID)
 	require.NoError(t, err)
-	err = repo.AddURL(ctx, userID, url2)
+	err = repo.CreateURLWithUser(ctx, url2, userID)
 	require.NoError(t, err)
 
 	// Тестируем получение URL пользователя
@@ -96,19 +79,8 @@ func TestUserURLsRepository_AddURL(t *testing.T) {
 		LongURL:  "https://example.com",
 	}
 
-	// Добавляем URL в таблицу urls
-	_, err = db.ExecContext(ctx, `INSERT INTO urls (short_url, long_url) VALUES (?, ?)`,
-		url.ShortURL, url.LongURL)
-	require.NoError(t, err)
-
-	// Получаем ID созданного URL
-	var urlID uint
-	err = db.QueryRowContext(ctx, `SELECT id FROM urls WHERE short_url = ?`, url.ShortURL).Scan(&urlID)
-	require.NoError(t, err)
-	url.ID = urlID
-
 	// Тестируем добавление URL для пользователя
-	err = repo.AddURL(ctx, userID, url)
+	err = repo.CreateURLWithUser(ctx, url, userID)
 	assert.NoError(t, err)
 
 	// Проверяем, что связь создана
@@ -118,10 +90,10 @@ func TestUserURLsRepository_AddURL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
-	// Тестируем повторное добавление (должно вернуть ошибку)
-	err = repo.AddURL(ctx, userID, url)
+	// Тестируем повторное добавление (должно вернуть ошибку "уже существует")
+	err = repo.CreateURLWithUser(ctx, url, userID)
 	assert.Error(t, err)
-	assert.Equal(t, repository.ErrURLExists, err)
+	assert.True(t, repository.IsExistsError(err))
 }
 
 func TestUserURLsRepository_AddURL_Validation(t *testing.T) {
@@ -133,12 +105,12 @@ func TestUserURLsRepository_AddURL_Validation(t *testing.T) {
 	ctx := context.Background()
 
 	// Тестируем валидацию пустого userID
-	err := repo.AddURL(ctx, "", &model.URLsModel{ID: 1})
+	err := repo.CreateURLWithUser(ctx, &model.URLsModel{ID: 1}, "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "userID cannot be empty")
 
 	// Тестируем валидацию nil URL
-	err = repo.AddURL(ctx, "test-user-id", nil)
+	err = repo.CreateURLWithUser(ctx, nil, "test-user-id")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "url cannot be nil")
 }

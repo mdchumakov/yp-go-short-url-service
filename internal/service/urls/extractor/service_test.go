@@ -21,11 +21,12 @@ func TestNewLinkExtractorService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Создаем мок репозитория
-	mockRepo := mock.NewMockURLRepositoryReader(ctrl)
+	// Создаем моки репозиториев
+	mockURLRepo := mock.NewMockURLRepositoryReader(ctrl)
+	mockUserURLsRepo := mock.NewMockUserURLsRepositoryReader(ctrl)
 
 	// Создаем сервис через тестовый конструктор
-	service := NewLinkExtractorService(mockRepo)
+	service := NewLinkExtractorService(mockURLRepo, mockUserURLsRepo)
 
 	// Проверяем, что сервис создан корректно
 	assert.NotNil(t, service)
@@ -42,7 +43,8 @@ func Test_linkExtractorService_ExtractLongURL(t *testing.T) {
 
 	// Создаем сервис
 	service := &linkExtractorService{
-		repository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepositoryReader(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -149,7 +151,8 @@ func Test_linkExtractorService_ExtractLongURL_EdgeCases(t *testing.T) {
 
 	// Создаем сервис
 	service := &linkExtractorService{
-		repository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepositoryReader(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -222,7 +225,8 @@ func Benchmark_linkExtractorService_ExtractLongURL(b *testing.B) {
 
 	// Создаем сервис
 	service := &linkExtractorService{
-		repository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepositoryReader(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов

@@ -21,11 +21,12 @@ func TestNewLinkShortenerService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Создаем мок репозитория
-	mockRepo := mock.NewMockURLRepository(ctrl)
+	// Создаем моки репозиториев
+	mockURLRepo := mock.NewMockURLRepository(ctrl)
+	mockUserURLsRepo := mock.NewMockUserURLsRepository(ctrl)
 
 	// Создаем сервис через тестовый конструктор
-	service := NewURLShortenerService(mockRepo)
+	service := NewURLShortenerService(mockURLRepo, mockUserURLsRepo)
 
 	// Проверяем, что сервис создан корректно
 	assert.NotNil(t, service)
@@ -42,7 +43,8 @@ func Test_linkShortenerService_ShortURL(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -198,7 +200,8 @@ func Test_linkShortenerService_ShortURL_EdgeCases(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -293,7 +296,8 @@ func Test_linkShortenerService_extractShortURLIfExists(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -366,7 +370,8 @@ func Test_linkShortenerService_saveShortURLToStorage(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -418,7 +423,8 @@ func Test_urlShortenerService_ShortURLsByBatch(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
@@ -680,7 +686,8 @@ func Test_urlShortenerService_ShortURL_ConflictScenarios(t *testing.T) {
 
 	// Создаем сервис
 	service := &urlShortenerService{
-		urlRepository: mockRepo,
+		urlRepository:      mockRepo,
+		userURLsRepository: mock.NewMockUserURLsRepository(ctrl),
 	}
 
 	// Создаем контекст с логгером для тестов
