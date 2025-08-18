@@ -120,7 +120,7 @@ func TestSetJWTCookie(t *testing.T) {
 		CookiePath:     "/",
 		CookieDomain:   "",
 		CookieSecure:   false,
-		CookieHttpOnly: true,
+		CookieHTTPOnly: true,
 		CookieSameSite: "lax",
 		TokenDuration:  24 * time.Hour,
 	}
@@ -160,7 +160,7 @@ func TestClearJWTCookie(t *testing.T) {
 		CookiePath:     "/",
 		CookieDomain:   "",
 		CookieSecure:   false,
-		CookieHttpOnly: true,
+		CookieHTTPOnly: true,
 		CookieSameSite: "lax",
 	}
 
@@ -218,7 +218,7 @@ func TestJWTAuthMiddlewareWithCookie(t *testing.T) {
 		CookiePath:     "/",
 		CookieDomain:   "",
 		CookieSecure:   false,
-		CookieHttpOnly: true,
+		CookieHTTPOnly: true,
 		CookieSameSite: "lax",
 		TokenDuration:  24 * time.Hour,
 	}

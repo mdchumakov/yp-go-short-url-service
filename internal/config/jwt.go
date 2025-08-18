@@ -17,7 +17,7 @@ type JWTSettings struct {
 	CookiePath     string `envconfig:"JWT_COOKIE_PATH" default:"/" required:"false"`
 	CookieDomain   string `envconfig:"JWT_COOKIE_DOMAIN" default:"" required:"false"`
 	CookieSecure   bool   `envconfig:"JWT_COOKIE_SECURE" default:"false" required:"false"`
-	CookieHttpOnly bool   `envconfig:"JWT_COOKIE_HTTP_ONLY" default:"true" required:"false"`
+	CookieHTTPOnly bool   `envconfig:"JWT_COOKIE_HTTP_ONLY" default:"true" required:"false"`
 	CookieSameSite string `envconfig:"JWT_COOKIE_SAME_SITE" default:"lax" required:"false"`
 }
 

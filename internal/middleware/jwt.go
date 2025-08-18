@@ -147,7 +147,7 @@ func setJWTCookie(c *gin.Context, token string, jwtSettings *config.JWTSettings,
 		jwtSettings.CookiePath,
 		domain,
 		jwtSettings.CookieSecure,
-		jwtSettings.CookieHttpOnly,
+		jwtSettings.CookieHTTPOnly,
 	)
 
 	if logger != nil {
@@ -174,7 +174,7 @@ func SetJWTCookie(c *gin.Context, token string, jwtSettings *config.JWTSettings,
 		jwtSettings.CookiePath,
 		domain,
 		jwtSettings.CookieSecure,
-		jwtSettings.CookieHttpOnly,
+		jwtSettings.CookieHTTPOnly,
 	)
 }
 
@@ -197,7 +197,7 @@ func ClearJWTCookie(c *gin.Context, jwtSettings *config.JWTSettings) {
 		jwtSettings.CookiePath,
 		domain,
 		jwtSettings.CookieSecure,
-		jwtSettings.CookieHttpOnly,
+		jwtSettings.CookieHTTPOnly,
 	)
 }
 
