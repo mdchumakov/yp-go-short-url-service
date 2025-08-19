@@ -77,11 +77,11 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
-	userURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService)
+	UserURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService)
 	URLShortenerHandler := urlShortenerHandler.NewCreatingShortLinksHandler(URLShortenerService, settings)
 	URLShortenerAPIHandler := shortenAPI.NewCreatingShortURLsAPIHandler(URLShortenerService, settings)
 	URLShortenerBatchAPIHandler := shortenBatchAPI.NewCreatingShortURLsByBatchAPIHandler(URLShortenerService, settings)
-	healthHandler := health.NewPingHandler(pingService)
+	HealthHandler := health.NewPingHandler(pingService)
 
 	return &App{
 		router:                    router,
@@ -89,8 +89,8 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		shortLinksHandlerAPI:      URLShortenerAPIHandler,
 		shortLinksBatchHandlerAPI: URLShortenerBatchAPIHandler,
 		fullLinkHandler:           URLExtractorHandler,
-		userURLsHandler:           userURLsHandler,
-		pingHandler:               healthHandler,
+		userURLsHandler:           UserURLsHandler,
+		pingHandler:               HealthHandler,
 		services: Services{
 			auth: AuthService,
 			jwt:  JWTService,
@@ -107,8 +107,8 @@ func (a *App) SetupCommonMiddlewares() {
 }
 
 func (a *App) SetupRoutes() {
-	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, true, a.logger)
-	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, true, a.logger)
+	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
+	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
 
 	publicGroup := a.router.Group("/")
 	publicGroup.Use(anonAllowedMiddleware)

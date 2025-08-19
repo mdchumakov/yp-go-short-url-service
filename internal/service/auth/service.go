@@ -60,7 +60,12 @@ func (s *authService) GetOrCreateAnonymousUser(ctx context.Context, clientIP, us
 		return user, nil
 	}
 
-	return s.CreateAnonymousUser(ctx, clientIP, userAgent, s.GenerateExpirationTime())
+	user, err = s.CreateAnonymousUser(ctx, clientIP, userAgent, s.GenerateExpirationTime())
+	if err != nil {
+		logger.Errorw("Failed to create anonymous user", "username", username, "error", err, "request_id", requestID)
+		return nil, err
+	}
+	return user, nil
 }
 
 func (s *authService) GenerateAnonymousName(clientIP, userAgent string) string {

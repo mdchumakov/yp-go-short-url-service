@@ -242,7 +242,7 @@ func TestJWTAuthMiddlewareWithCookie(t *testing.T) {
 	mockJWTService.On("ValidateToken", mock.Anything, "test_jwt_token").Return(testUser, nil)
 
 	// Создаем middleware
-	middleware := JWTAuthMiddleware(mockJWTService, mockAuthService, jwtSettings, false, false, logger)
+	middleware := JWTAuthMiddleware(mockJWTService, mockAuthService, jwtSettings, false, logger)
 
 	// Создаем тестовый контекст с куки
 	w := httptest.NewRecorder()

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type userURLsRepository struct {
@@ -105,8 +107,9 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	url.ID = uint(urlID)
 
 	// 2. Связываем URL с пользователем
-	userURLQuery := `INSERT INTO user_urls (user_id, url_id) VALUES (?, ?)`
-	_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
+	userURLQuery := `INSERT INTO user_urls (id, user_id, url_id) VALUES (?, ?, ?)`
+	id := uuid.New()
+	_, err = tx.ExecContext(ctx, userURLQuery, id.String(), userID, url.ID)
 	if err != nil {
 		// Проверяем на дублирование записи
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
