@@ -42,7 +42,6 @@ func SetupSQLiteDB(dbPath string, log *zap.SugaredLogger) (*sql.DB, error) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		short_url TEXT NOT NULL UNIQUE,
 		long_url TEXT NOT NULL,
-		user_id TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
@@ -90,7 +89,6 @@ func SetupSQLiteDB(dbPath string, log *zap.SugaredLogger) (*sql.DB, error) {
 	indexes := []string{
 		"CREATE INDEX IF NOT EXISTS idx_urls_short_url ON urls(short_url);",
 		"CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls(long_url);",
-		"CREATE INDEX IF NOT EXISTS idx_urls_user_id ON urls(user_id);",
 		"CREATE INDEX IF NOT EXISTS idx_user_urls_user_id ON user_urls(user_id);",
 		"CREATE INDEX IF NOT EXISTS idx_user_urls_url_id ON user_urls(url_id);",
 		"CREATE UNIQUE INDEX IF NOT EXISTS idx_user_urls_user_id_url_id ON user_urls(user_id, url_id);",

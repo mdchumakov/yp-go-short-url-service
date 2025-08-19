@@ -8,6 +8,8 @@ import (
 	"strings"
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type userURLsRepository struct {
@@ -31,7 +33,12 @@ func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
 
 	var urls []*model.URLsModel
 	for rows.Next() {
@@ -81,8 +88,8 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	}()
 
 	// 1. Создаем URL
-	urlQuery := `INSERT INTO urls (short_url, long_url) VALUES (?, ?) RETURNING id`
-	err = tx.QueryRowContext(ctx, urlQuery, url.ShortURL, url.LongURL).Scan(&url.ID)
+	urlQuery := `INSERT INTO urls (short_url, long_url, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`
+	result, err := tx.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL)
 	if err != nil {
 		// Проверяем на дублирование записи в SQLite
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -91,9 +98,17 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 		return fmt.Errorf("failed to insert url: %w", err)
 	}
 
+	// Получаем ID созданного URL
+	urlID, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	url.ID = uint(urlID)
+
 	// 2. Связываем URL с пользователем
-	userURLQuery := `INSERT INTO user_urls (user_id, url_id) VALUES (?, ?)`
-	_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
+	userURLQuery := `INSERT INTO user_urls (id, user_id, url_id, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`
+	userURLID := uuid.New().String()
+	_, err = tx.ExecContext(ctx, userURLQuery, userURLID, userID, url.ID)
 	if err != nil {
 		// Проверяем на дублирование записи в SQLite
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -136,8 +151,8 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 	}()
 
 	// Подготавливаем batch запросы
-	urlQuery := `INSERT INTO urls (short_url, long_url) VALUES (?, ?) RETURNING id`
-	userURLQuery := `INSERT INTO user_urls (user_id, url_id) VALUES (?, ?)`
+	urlQuery := `INSERT INTO urls (short_url, long_url, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`
+	userURLQuery := `INSERT INTO user_urls (id, user_id, url_id, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`
 
 	// Выполняем batch операцию
 	for _, url := range urls {
@@ -146,7 +161,7 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 		}
 
 		// Создаем URL
-		err = tx.QueryRowContext(ctx, urlQuery, url.ShortURL, url.LongURL).Scan(&url.ID)
+		result, err := tx.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL)
 		if err != nil {
 			// Проверяем на дублирование записи в SQLite
 			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -155,8 +170,16 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 			return fmt.Errorf("failed to insert url %s: %w", url.ShortURL, err)
 		}
 
+		// Получаем ID созданного URL
+		urlID, err := result.LastInsertId()
+		if err != nil {
+			return fmt.Errorf("failed to get last insert id for url %s: %w", url.ShortURL, err)
+		}
+		url.ID = uint(urlID)
+
 		// Связываем с пользователем
-		_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
+		userURLID := uuid.New().String()
+		_, err = tx.ExecContext(ctx, userURLQuery, userURLID, userID, url.ID)
 		if err != nil {
 			// Проверяем на дублирование записи в SQLite
 			if strings.Contains(err.Error(), "UNIQUE constraint failed") {

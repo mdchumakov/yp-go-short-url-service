@@ -21,21 +21,26 @@ func NewUsersRepository(db *sql.DB) repository.UserRepository {
 }
 
 // CreateUser создает нового пользователя
-func (r *usersRepository) CreateUser(ctx context.Context, username, password string, expiresAt *time.Time) (*model.UserModel, error) {
+func (r *usersRepository) CreateUser(
+	ctx context.Context,
+	username, password string,
+	expiresAt *time.Time,
+) (*model.UserModel, error) {
 	if username == "" {
 		return nil, errors.New("username cannot be empty")
 	}
 
 	query := `
-		INSERT INTO users (name, password, is_anonymous, expires_at, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, ?, ?) 
+		INSERT INTO users (id, name, password, is_anonymous, expires_at) 
+		VALUES (?, ?, ?, ?, ?) 
 		RETURNING id, name, password, is_anonymous, expires_at, created_at, updated_at
 	`
 
 	var user model.UserModel
 	isAnonymous := password == ""
 
-	err := r.db.QueryRowContext(ctx, query, username, password, isAnonymous).Scan(
+	id := uuid.New()
+	err := r.db.QueryRowContext(ctx, query, id.String(), username, password, isAnonymous, expiresAt).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Password,
