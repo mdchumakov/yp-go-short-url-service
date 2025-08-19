@@ -85,7 +85,7 @@ func TestUserURLsRepository_AddURL(t *testing.T) {
 
 	// Проверяем, что связь создана
 	var count int
-	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
 		userID, url.ID).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -145,7 +145,7 @@ func TestUserURLsRepository_CreateURLWithUserBasic(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// Проверяем связь с пользователем
-	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
 		userID, url.ID).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -187,7 +187,7 @@ func TestUserURLsRepository_CreateMultipleURLsWithUser(t *testing.T) {
 	// Проверяем, что все URL созданы и связаны с пользователем
 	for _, url := range urls {
 		var count int
-		err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
+		err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
 			userID, url.ID).Scan(&count)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
@@ -215,7 +215,7 @@ func setupUserURLsTestDB(t *testing.T) (*sql.DB, func()) {
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL UNIQUE,
 			password TEXT,
-			is_anonymous BOOLEAN DEFAULT FALSE,
+			is_anonymous INTEGER DEFAULT 0,
 			expires_at DATETIME,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -227,23 +227,11 @@ func setupUserURLsTestDB(t *testing.T) (*sql.DB, func()) {
 		CREATE TABLE IF NOT EXISTS urls (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			short_url TEXT NOT NULL UNIQUE,
-			long_url TEXT NOT NULL UNIQUE,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
-	require.NoError(t, err)
-
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS user_urls (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id TEXT NOT NULL,
-			url_id INTEGER NOT NULL,
+			long_url TEXT NOT NULL,
+			user_id TEXT,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-			FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE,
-			UNIQUE(user_id, url_id)
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 		)
 	`)
 	require.NoError(t, err)
