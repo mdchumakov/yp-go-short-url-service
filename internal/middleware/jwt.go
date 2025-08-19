@@ -32,6 +32,7 @@ func JWTAuthMiddleware(
 	authService service.AuthService,
 	jwtSettings *config.JWTSettings,
 	isAnonAllowed bool,
+	isIgnoreExpired bool,
 	logger *zap.SugaredLogger,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -91,7 +92,7 @@ func JWTAuthMiddleware(
 			return
 		}
 
-		if expired {
+		if expired && !isIgnoreExpired {
 			logger.Debugw("JWT token expired")
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Token expired",

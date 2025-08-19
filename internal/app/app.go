@@ -107,8 +107,8 @@ func (a *App) SetupCommonMiddlewares() {
 }
 
 func (a *App) SetupRoutes() {
-	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
-	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
+	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, true, a.logger)
+	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, true, a.logger)
 
 	publicGroup := a.router.Group("/")
 	publicGroup.Use(anonAllowedMiddleware)
