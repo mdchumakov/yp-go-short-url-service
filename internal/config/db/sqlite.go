@@ -3,8 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"yp-go-short-url-service/internal/repository"
-	"yp-go-short-url-service/internal/repository/sqlite"
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
@@ -103,9 +101,4 @@ func SetupSQLiteDB(dbPath string, log *zap.SugaredLogger) (*sql.DB, error) {
 
 	log.Info("Successfully initialized SQLite database")
 	return db, nil
-}
-
-// NewSQLiteRepository создает новый экземпляр SQLite репозитория
-func NewSQLiteRepository(db *sql.DB) repository.URLRepository {
-	return sqlite.NewURLsRepository(db)
 }
