@@ -85,7 +85,7 @@ func TestUserURLsRepository_AddURL(t *testing.T) {
 
 	// Проверяем, что связь создана
 	var count int
-	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
 		userID, url.ID).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -145,7 +145,7 @@ func TestUserURLsRepository_CreateURLWithUserBasic(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// Проверяем связь с пользователем
-	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
 		userID, url.ID).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -187,7 +187,7 @@ func TestUserURLsRepository_CreateMultipleURLsWithUser(t *testing.T) {
 	// Проверяем, что все URL созданы и связаны с пользователем
 	for _, url := range urls {
 		var count int
-		err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM urls WHERE user_id = ? AND id = ?`,
+		err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_urls WHERE user_id = ? AND url_id = ?`,
 			userID, url.ID).Scan(&count)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
@@ -228,12 +228,35 @@ func setupUserURLsTestDB(t *testing.T) (*sql.DB, func()) {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			short_url TEXT NOT NULL UNIQUE,
 			long_url TEXT NOT NULL,
-			user_id TEXT,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
+	require.NoError(t, err)
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS user_urls (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			url_id INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+			FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE
+		)
+	`)
+	require.NoError(t, err)
+
+	// Создаем индексы для улучшения производительности
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_urls_short_url ON urls(short_url)`)
+	require.NoError(t, err)
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls(long_url)`)
+	require.NoError(t, err)
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_user_urls_user_id ON user_urls(user_id)`)
+	require.NoError(t, err)
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_user_urls_url_id ON user_urls(url_id)`)
+	require.NoError(t, err)
+	_, err = db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_user_urls_user_id_url_id ON user_urls(user_id, url_id)`)
 	require.NoError(t, err)
 
 	cleanup := func() {

@@ -20,10 +20,11 @@ func NewUserURLsRepository(db *sql.DB) repository.UserURLsRepository {
 
 func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	query := `
-		SELECT id, short_url, long_url, created_at, updated_at
-		FROM urls
-		WHERE user_id = ?
-		ORDER BY created_at DESC
+		SELECT u.id, u.short_url, u.long_url, u.created_at, u.updated_at
+		FROM urls u
+		INNER JOIN user_urls uu ON u.id = uu.url_id
+		WHERE uu.user_id = ?
+		ORDER BY uu.created_at DESC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, userID)
@@ -68,9 +69,26 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 		return errors.New("url cannot be nil")
 	}
 
-	// Создаем URL с user_id
-	urlQuery := `INSERT INTO urls (short_url, long_url, user_id, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`
-	result, err := r.db.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL, userID)
+	// Начинаем транзакцию
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// Отложенный rollback (выполнится только если не будет commit)
+	defer func() {
+		if err != nil {
+			rollbackErr := tx.Rollback()
+			if rollbackErr != nil {
+				// Логируем ошибку rollback, но возвращаем оригинальную ошибку
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
+		}
+	}()
+
+	// 1. Создаем URL
+	urlQuery := `INSERT INTO urls (short_url, long_url, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`
+	result, err := tx.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL)
 	if err != nil {
 		// Проверяем на дублирование записи в SQLite
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -85,6 +103,23 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 		return fmt.Errorf("failed to get last insert id: %w", err)
 	}
 	url.ID = uint(urlID)
+
+	// 2. Связываем URL с пользователем
+	userURLQuery := `INSERT INTO user_urls (user_id, url_id) VALUES (?, ?)`
+	_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
+	if err != nil {
+		// Проверяем на дублирование записи
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return repository.ErrURLExists
+		}
+		return fmt.Errorf("failed to link url to user: %w", err)
+	}
+
+	// Подтверждаем транзакцию
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 
 	return nil
 }
@@ -113,8 +148,9 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 		}
 	}()
 
-	// Подготавливаем batch запрос
-	urlQuery := `INSERT INTO urls (short_url, long_url, user_id, created_at, updated_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))`
+	// Подготавливаем batch запросы
+	urlQuery := `INSERT INTO urls (short_url, long_url, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`
+	userURLQuery := `INSERT INTO user_urls (user_id, url_id) VALUES (?, ?)`
 
 	// Выполняем batch операцию
 	for _, url := range urls {
@@ -122,8 +158,8 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 			continue
 		}
 
-		// Создаем URL с user_id
-		result, err := tx.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL, userID)
+		// 1. Создаем URL
+		result, err := tx.ExecContext(ctx, urlQuery, url.ShortURL, url.LongURL)
 		if err != nil {
 			// Проверяем на дублирование записи в SQLite
 			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -138,6 +174,16 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 			return fmt.Errorf("failed to get last insert id for url %s: %w", url.ShortURL, err)
 		}
 		url.ID = uint(urlID)
+
+		// 2. Связываем с пользователем
+		_, err = tx.ExecContext(ctx, userURLQuery, userID, url.ID)
+		if err != nil {
+			// Проверяем на дублирование записи
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				return repository.ErrURLExists
+			}
+			return fmt.Errorf("failed to link url %s to user: %w", url.ShortURL, err)
+		}
 	}
 
 	return tx.Commit()
