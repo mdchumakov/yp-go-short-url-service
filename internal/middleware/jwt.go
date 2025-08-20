@@ -48,36 +48,28 @@ func JWTAuthMiddleware(
 		if token == "" {
 			logger.Debugw("No JWT token found in request Headers", "request_id", requestID)
 			clientIP, userAgent := c.ClientIP(), c.Request.UserAgent()
-			if isAnonAllowed {
-				anonUser, err := authService.GetOrCreateAnonymousUser(ctx, clientIP, userAgent)
-				if err != nil {
-					logger.Errorw("Failed to get or create anonymous user", "error", err, "request_id", requestID)
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"error": "Failed to authenticate user",
-					})
-					c.Abort()
-					return
-				}
-
-				token, err = jwtService.GenerateTokenForUser(ctx, anonUser)
-				if err != nil {
-					logger.Errorw("Failed to generate token for anonymous user", "error", err, "request_id", requestID)
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"error": "Failed to generate authentication token",
-					})
-					c.Abort()
-					return
-				}
-
-				// Устанавливаем куки для анонимного пользователя
-				setJWTCookie(c, token, jwtSettings, logger, requestID)
-			} else {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"error": "Authentication required",
+			anonUser, err := authService.GetOrCreateAnonymousUser(ctx, clientIP, userAgent)
+			if err != nil {
+				logger.Errorw("Failed to get or create anonymous user", "error", err, "request_id", requestID)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to authenticate user",
 				})
 				c.Abort()
 				return
 			}
+
+			token, err = jwtService.GenerateTokenForUser(ctx, anonUser)
+			if err != nil {
+				logger.Errorw("Failed to generate token for anonymous user", "error", err, "request_id", requestID)
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to generate authentication token",
+				})
+				c.Abort()
+				return
+			}
+
+			// Устанавливаем куки для анонимного пользователя
+			setJWTCookie(c, token, jwtSettings, logger, requestID)
 		}
 
 		// Проверяем, не истек ли токен
