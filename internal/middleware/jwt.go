@@ -113,6 +113,9 @@ func JWTAuthMiddleware(
 			return
 		}
 
+		setTokenInHeader(c, token)
+		logger.Debugw("JWT token validated successfully", "user_id", user.ID, "request_id", requestID)
+
 		// Добавляем пользователя в контекст
 		ctx = context.WithValue(ctx, JWTTokenContextKey, user)
 		c.Request = c.Request.WithContext(ctx)
@@ -125,6 +128,8 @@ func JWTAuthMiddleware(
 			"request_id", requestID,
 		)
 		c.Next()
+
+		setTokenInHeader(c, token)
 	}
 }
 
@@ -232,6 +237,10 @@ func extractTokenFromHeader(c *gin.Context) string {
 	}
 
 	return token
+}
+
+func setTokenInHeader(c *gin.Context, token string) {
+	c.Header(AuthorizationHeader, BearerPrefix+token)
 }
 
 // GetJWTUserFromContext получает пользователя из JWT контекста
