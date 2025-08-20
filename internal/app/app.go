@@ -77,7 +77,7 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
-	UserURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService)
+	UserURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService, settings)
 	URLShortenerHandler := urlShortenerHandler.NewCreatingShortLinksHandler(URLShortenerService, settings)
 	URLShortenerAPIHandler := shortenAPI.NewCreatingShortURLsAPIHandler(URLShortenerService, settings)
 	URLShortenerBatchAPIHandler := shortenBatchAPI.NewCreatingShortURLsByBatchAPIHandler(URLShortenerService, settings)
@@ -108,7 +108,7 @@ func (a *App) SetupCommonMiddlewares() {
 
 func (a *App) SetupRoutes() {
 	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
-	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
+	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
 
 	publicGroup := a.router.Group("/")
 	publicGroup.Use(anonAllowedMiddleware)

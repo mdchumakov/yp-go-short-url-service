@@ -44,6 +44,7 @@ func JWTAuthMiddleware(
 			logger.Debugw("No JWT token found in request Cookie", "request_id", requestID)
 			token = extractTokenFromHeader(c)
 		}
+		cookieHeader := c.GetHeader("Cookie")
 		if token == "" {
 			logger.Debugw("No JWT token found in request Headers", "request_id", requestID)
 			clientIP, userAgent := c.ClientIP(), c.Request.UserAgent()
@@ -127,9 +128,14 @@ func JWTAuthMiddleware(
 			"is_anonymous", user.IsAnonymous,
 			"request_id", requestID,
 		)
-		c.Next()
+		if cookieHeader == "" {
+			// Срабатывает в том случае, если к нам пришли без кук, мы не можем ходить дальше, но можем выдать новый токен
+			c.JSON(http.StatusNoContent, gin.H{"message": "JWT cookie set"})
+			c.Abort()
+			return
+		}
 
-		setTokenInHeader(c, token)
+		c.Next()
 	}
 }
 

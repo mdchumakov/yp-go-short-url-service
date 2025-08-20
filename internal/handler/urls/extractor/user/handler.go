@@ -1,7 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
@@ -9,13 +12,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewExtractingUserURLsHandler(service service.LinkExtractorService) handler.Handler {
+func NewExtractingUserURLsHandler(service service.LinkExtractorService, settings *config.Settings) handler.Handler {
 	return &extractingUserURLsHandler{
 		service: service,
+		baseURL: settings.GetBaseURL(),
 	}
 }
 
 type extractingUserURLsHandler struct {
+	baseURL string
 	service service.LinkExtractorService
 }
 
@@ -31,7 +36,7 @@ type extractingUserURLsHandler struct {
 // @Failure 401 {object} object "Не авторизован - JWT токен отсутствует или недействителен"
 // @Failure 500 {object} object "Внутренняя ошибка сервера"
 // @Router /api/user/urls [get]
-func (e *extractingUserURLsHandler) Handle(c *gin.Context) {
+func (h *extractingUserURLsHandler) Handle(c *gin.Context) {
 	logger := middleware.GetLogger(c.Request.Context())
 	requestID := middleware.ExtractRequestID(c.Request.Context())
 	user := middleware.GetJWTUserFromContext(c.Request.Context())
@@ -44,7 +49,7 @@ func (e *extractingUserURLsHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	userURLs, err := e.service.ExtractUserURLs(c.Request.Context(), user.ID)
+	userURLs, err := h.service.ExtractUserURLs(c.Request.Context(), user.ID)
 	if err != nil {
 		logger.Errorw("Failed to extract user URLs",
 			"request_id", requestID,
@@ -63,7 +68,7 @@ func (e *extractingUserURLsHandler) Handle(c *gin.Context) {
 	response := make(UserURLsResponse, len(userURLs))
 	for i, url := range userURLs {
 		response[i] = UserURLResponse{
-			ShortURL:    url.ShortURL,
+			ShortURL:    h.buildShortURL(url.ShortURL),
 			OriginalURL: url.LongURL,
 		}
 	}
@@ -73,5 +78,13 @@ func (e *extractingUserURLsHandler) Handle(c *gin.Context) {
 		"request_id", requestID,
 		"user_id", user.ID,
 		"urls_count", len(userURLs),
+	)
+}
+
+func (h *extractingUserURLsHandler) buildShortURL(shortedURL string) string {
+	return fmt.Sprintf(
+		"%s/%s",
+		strings.TrimRight(h.baseURL, "/"),
+		shortedURL,
 	)
 }
