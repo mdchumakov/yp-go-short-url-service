@@ -128,7 +128,7 @@ func JWTAuthMiddleware(
 			"is_anonymous", user.IsAnonymous,
 			"request_id", requestID,
 		)
-		if cookieHeader == "" {
+		if cookieHeader == "" && !isAnonAllowed {
 			// Срабатывает в том случае, если к нам пришли без кук, мы не можем ходить дальше, но можем выдать новый токен
 			c.JSON(http.StatusNoContent, gin.H{"message": "JWT cookie set"})
 			c.Abort()
