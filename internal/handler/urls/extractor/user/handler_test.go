@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"yp-go-short-url-service/internal/config"
 
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/model"
@@ -18,12 +19,30 @@ import (
 	"go.uber.org/zap"
 )
 
+func getDefaultSettings() *config.Settings {
+	return &config.Settings{
+		EnvSettings: &config.ENVSettings{
+			Server: &config.ServerSettings{
+				ServerAddress: "testhost:1234",
+				ServerHost:    "testhost",
+				ServerPort:    1234,
+				ServerDomain:  "testdomain",
+				BaseURL:       "http://testhost:1234/",
+			},
+		},
+		Flags: &config.Flags{
+			ServerAddress: "testhost:1234",
+			BaseURL:       "http://testhost:1234/",
+		},
+	}
+}
+
 func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockLinkExtractorService) {
 	gin.SetMode(gin.TestMode)
 	ctrl := gomock.NewController(t)
 	mockService := mock.NewMockLinkExtractorService(ctrl)
 
-	handler := NewExtractingUserURLsHandler(mockService)
+	handler := NewExtractingUserURLsHandler(mockService, getDefaultSettings())
 
 	logger, _ := zap.NewDevelopment()
 	router := gin.New()
@@ -79,9 +98,9 @@ func TestExtractingUserURLsHandler_Handle_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Len(t, response, 2)
-	assert.Equal(t, "abc123", response[0].ShortURL)
+	assert.Equal(t, "http://testhost:1234/abc123", response[0].ShortURL)
 	assert.Equal(t, "https://example.com/long-url-1", response[0].OriginalURL)
-	assert.Equal(t, "def456", response[1].ShortURL)
+	assert.Equal(t, "http://testhost:1234/def456", response[1].ShortURL)
 	assert.Equal(t, "https://example.com/long-url-2", response[1].OriginalURL)
 }
 
