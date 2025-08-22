@@ -40,12 +40,13 @@ func (r *urlsRepository) Ping(ctx context.Context) error {
 func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
-	query := `SELECT * FROM urls WHERE long_url = $1`
+	query := `SELECT * FROM urls WHERE long_url = $1 AND is_deleted = false`
 
 	err := r.pool.QueryRow(ctx, query, longURL).Scan(
 		&urls.ID,
 		&urls.ShortURL,
 		&urls.LongURL,
+		&urls.IsDeleted,
 		&urls.CreatedAt,
 		&urls.UpdatedAt,
 	)
@@ -65,6 +66,7 @@ func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*m
 		&urls.ID,
 		&urls.ShortURL,
 		&urls.LongURL,
+		&urls.IsDeleted,
 		&urls.CreatedAt,
 		&urls.UpdatedAt,
 	)
@@ -124,7 +126,13 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 }
 
 func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
-	query := `SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	query := `
+		SELECT id, short_url, long_url, is_deleted, created_at, updated_at
+		FROM urls 
+		WHERE is_deleted = false
+		ORDER BY created_at DESC 
+		LIMIT $1 OFFSET $2
+	`
 
 	rows, err := r.pool.Query(ctx, query, limit, offset)
 	if err != nil {
@@ -139,6 +147,7 @@ func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*mode
 			&url.ID,
 			&url.ShortURL,
 			&url.LongURL,
+			&url.IsDeleted,
 			&url.CreatedAt,
 			&url.UpdatedAt,
 		)
@@ -156,7 +165,7 @@ func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*mode
 }
 
 func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
-	query := `SELECT COUNT(*) FROM urls`
+	query := `SELECT COUNT(*) FROM urls WHERE is_deleted = false`
 
 	var count int64
 	err := r.pool.QueryRow(ctx, query).Scan(&count)
@@ -165,4 +174,44 @@ func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (r *urlsRepository) SoftDeleteByShortURLs(ctx context.Context, shortURLs []string, userID string) error {
+	if len(shortURLs) == 0 {
+		return nil
+	}
+
+	// Используем транзакцию для атомарности операции
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	// Подготавливаем batch update запрос с проверкой владельца
+	query := `
+		UPDATE urls 
+		SET is_deleted = true, updated_at = NOW() 
+		WHERE short_url = ANY($1) 
+		AND id IN (
+			SELECT uu.url_id 
+			FROM user_urls uu 
+			WHERE uu.user_id = $2
+		)
+	`
+
+	_, err = tx.Exec(ctx, query, shortURLs, userID)
+	if err != nil {
+		return err
+	}
+
+	// Подтверждаем транзакцию
+	return tx.Commit(ctx)
 }

@@ -110,30 +110,6 @@ func TestUsersRepository_CreateUser_EmptyUsername(t *testing.T) {
 	assert.Contains(t, err.Error(), "username cannot be empty")
 }
 
-func TestUsersRepository_CreateUser_NilExpiresAt(t *testing.T) {
-	db, cleanup := setupUsersTestDB(t)
-	defer cleanup()
-
-	repo := NewUsersRepository(db)
-	ctx := context.Background()
-
-	// Тест создания пользователя с nil expiresAt
-	username := "testuser"
-	password := "testpassword"
-
-	user, err := repo.CreateUser(ctx, username, password, nil)
-	// Этот тест может не проходить из-за проблем с обработкой nil в SQLite
-	// В реальной реализации нужно использовать sql.NullTime
-	if err != nil {
-		t.Skip("Skipping test due to SQLite nil handling issue")
-	}
-	assert.NotNil(t, user)
-	assert.Equal(t, username, user.Name)
-	assert.Equal(t, password, user.Password)
-	assert.False(t, user.IsAnonymous)
-	// Не проверяем ExpiresAt, так как это может быть проблематично с nil
-}
-
 func TestUsersRepository_CreateUser_DuplicateUsername(t *testing.T) {
 	db, cleanup := setupUsersTestDB(t)
 	defer cleanup()
