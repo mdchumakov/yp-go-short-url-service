@@ -158,7 +158,7 @@ func TestURLsRepository_GetByShortURL_Success(t *testing.T) {
 	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"}).
 		AddRow(expectedURL.ID, expectedURL.ShortURL, expectedURL.LongURL, expectedURL.IsDeleted, expectedURL.CreatedAt, expectedURL.UpdatedAt)
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(expectedURL.ShortURL).
 		WillReturnRows(rows)
 
@@ -181,7 +181,7 @@ func TestURLsRepository_GetByShortURL_NotFound(t *testing.T) {
 	ctx := context.Background()
 	shortURL := "notfound"
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(shortURL).
 		WillReturnError(pgx.ErrNoRows)
 
@@ -200,7 +200,7 @@ func TestURLsRepository_GetByShortURL_DatabaseError(t *testing.T) {
 	shortURL := "error"
 	expectedErr := errors.New("database error")
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(shortURL).
 		WillReturnError(expectedErr)
 

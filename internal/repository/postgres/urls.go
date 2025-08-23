@@ -60,7 +60,7 @@ func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*mod
 func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
-	query := `SELECT * FROM urls WHERE short_url = $1`
+	query := `SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = $1`
 
 	err := r.pool.QueryRow(ctx, query, shortURL).Scan(
 		&urls.ID,
