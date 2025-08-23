@@ -40,7 +40,11 @@ func (r *urlsRepository) Ping(ctx context.Context) error {
 func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
-	query := `SELECT * FROM urls WHERE long_url = $1 AND is_deleted = false`
+	query := `
+		SELECT id, short_url, long_url, is_deleted, created_at, updated_at 
+		FROM urls 
+		WHERE long_url = $1 AND is_deleted = false
+		`
 
 	err := r.pool.QueryRow(ctx, query, longURL).Scan(
 		&urls.ID,

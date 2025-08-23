@@ -238,6 +238,7 @@ func (s *urlShortenerService) extractShortURLIfExists(ctx context.Context, longU
 
 	urlResponse, err := s.urlRepository.GetByLongURL(ctx, longURL)
 	if err != nil {
+		logger.Debugw("Failed to extract short URL from storage", "error", err, "request_id", requestID)
 		if repository.IsNotFoundError(err) {
 			logger.Debugw("URL not found in storage",
 				"long_url", longURL,

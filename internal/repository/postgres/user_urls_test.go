@@ -45,12 +45,12 @@ func TestUserURLsRepository_GetByUserID(t *testing.T) {
 		},
 	}
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"})
 	for _, url := range expectedURLs {
-		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.IsDeleted, url.CreatedAt, url.UpdatedAt)
 	}
 
-	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
+	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.is_deleted, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
 		WithArgs(userID).
 		WillReturnRows(rows)
 
@@ -74,9 +74,9 @@ func TestUserURLsRepository_GetByUserID_EmptyResult(t *testing.T) {
 	ctx := context.Background()
 	userID := "test-user-id"
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"})
 
-	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
+	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.is_deleted, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
 		WithArgs(userID).
 		WillReturnRows(rows)
 
@@ -94,7 +94,7 @@ func TestUserURLsRepository_GetByUserID_DatabaseError(t *testing.T) {
 	userID := "test-user-id"
 	expectedErr := repository.ErrURLNotFound
 
-	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
+	mock.ExpectQuery("SELECT u\\.id, u\\.short_url, u\\.long_url, u\\.is_deleted, u\\.created_at, u\\.updated_at FROM urls u INNER JOIN user_urls uu ON u\\.id = uu\\.url_id WHERE uu\\.user_id = \\$1 ORDER BY uu\\.created_at DESC").
 		WithArgs(userID).
 		WillReturnError(expectedErr)
 

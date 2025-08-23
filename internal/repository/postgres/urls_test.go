@@ -88,7 +88,7 @@ func TestURLsRepository_GetByLongURL_Success(t *testing.T) {
 			expectedURL.UpdatedAt,
 		)
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1 AND is_deleted = false").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(expectedURL.LongURL).
 		WillReturnRows(rows)
 
@@ -111,7 +111,7 @@ func TestURLsRepository_GetByLongURL_NotFound(t *testing.T) {
 	ctx := context.Background()
 	longURL := "https://example.com/not/found"
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1 AND is_deleted = false").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(longURL).
 		WillReturnError(pgx.ErrNoRows)
 
@@ -130,7 +130,7 @@ func TestURLsRepository_GetByLongURL_DatabaseError(t *testing.T) {
 	longURL := "https://example.com/error"
 	expectedErr := errors.New("database error")
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1 AND is_deleted = false").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(longURL).
 		WillReturnError(expectedErr)
 

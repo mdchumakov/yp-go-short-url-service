@@ -21,7 +21,7 @@ func NewUserURLsRepository(pool *pgxpool.Pool) repository.UserURLsRepository {
 
 func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	query := `
-		SELECT u.id, u.short_url, u.long_url, u.created_at, u.updated_at
+		SELECT u.id, u.short_url, u.long_url, u.is_deleted, u.created_at, u.updated_at
 		FROM urls u
 		INNER JOIN user_urls uu ON u.id = uu.url_id
 		WHERE uu.user_id = $1
@@ -41,6 +41,7 @@ func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]
 			&url.ID,
 			&url.ShortURL,
 			&url.LongURL,
+			&url.IsDeleted,
 			&url.CreatedAt,
 			&url.UpdatedAt,
 		)
