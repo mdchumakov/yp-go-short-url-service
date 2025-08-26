@@ -17,12 +17,12 @@ import (
 const maxBodySize int64 = 1024 * 1024 // 1 MB
 
 type CreatingShortLinks struct {
-	service service.LinkShortenerService
+	service service.URLShortenerService
 	baseURL string
 }
 
 func NewCreatingShortLinksHandler(
-	service service.LinkShortenerService,
+	service service.URLShortenerService,
 	settings *config.Settings,
 ) handler.Handler {
 	return &CreatingShortLinks{

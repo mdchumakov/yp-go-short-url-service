@@ -14,12 +14,12 @@ import (
 )
 
 type creatingShortURLsAPIHandler struct {
-	service service.LinkShortenerService
+	service service.URLShortenerService
 	baseURL string
 }
 
 func NewCreatingShortURLsAPIHandler(
-	service service.LinkShortenerService,
+	service service.URLShortenerService,
 	settings *config.Settings,
 ) handler.Handler {
 	return &creatingShortURLsAPIHandler{

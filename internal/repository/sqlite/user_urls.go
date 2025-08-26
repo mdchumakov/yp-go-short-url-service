@@ -16,6 +16,11 @@ type userURLsRepository struct {
 	db *sql.DB
 }
 
+func (r *userURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewUserURLsRepository(db *sql.DB) repository.UserURLsRepository {
 	return &userURLsRepository{db: db}
 }

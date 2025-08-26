@@ -229,6 +229,50 @@ paths:
       tags:
       - shortener
   /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет указанные короткие URL пользователя. Требует JWT аутентификации.
+      parameters:
+      - description: Массив коротких URL для удаления
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: URL успешно удалены
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Неверный запрос
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Не авторизован
+          schema:
+            additionalProperties: true
+            type: object
+        "415":
+          description: Неподдерживаемый тип контента
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Удалить URL пользователя
+      tags:
+      - user
     get:
       consumes:
       - application/json

@@ -11,7 +11,7 @@ import (
 func NewLinkExtractorService(
 	urlRepository repository.URLRepositoryReader,
 	userURLsRepository repository.UserURLsRepositoryReader,
-) service.LinkExtractorService {
+) service.URLExtractorService {
 	return &linkExtractorService{
 		urlRepository:      urlRepository,
 		userURLsRepository: userURLsRepository,
@@ -51,9 +51,11 @@ func (s *linkExtractorService) ExtractUserURLs(ctx context.Context, userID strin
 
 func (s *linkExtractorService) ExtractLongURL(ctx context.Context, shortURL string) (string, error) {
 	logger := middleware.GetLogger(ctx)
+	requestID := middleware.ExtractRequestID(ctx)
+
 	logger.Infow("Starting URL extraction process",
 		"short_url", shortURL,
-		"request_id", middleware.ExtractRequestID(ctx),
+		"request_id", requestID,
 	)
 
 	url, err := s.urlRepository.GetByShortURL(ctx, shortURL)
@@ -64,7 +66,7 @@ func (s *linkExtractorService) ExtractLongURL(ctx context.Context, shortURL stri
 		logger.Errorw("Failed to extract long URL from storage",
 			"error", err,
 			"short_url", shortURL,
-			"request_id", middleware.ExtractRequestID(ctx),
+			"request_id", requestID,
 		)
 		return "", err
 	}
@@ -72,15 +74,23 @@ func (s *linkExtractorService) ExtractLongURL(ctx context.Context, shortURL stri
 	if url == nil {
 		logger.Warnw("Short URL not found in storage",
 			"short_url", shortURL,
-			"request_id", middleware.ExtractRequestID(ctx),
+			"request_id", requestID,
 		)
 		return "", nil
+	}
+
+	if url.IsDeleted {
+		logger.Warnw("Short URL is deleted from storage",
+			"short_url", shortURL,
+			"request_id", requestID,
+		)
+		return "", service.ErrURLWasDeleted
 	}
 
 	logger.Infow("Successfully extracted long URL from storage",
 		"long_url", url.LongURL,
 		"short_url", shortURL,
-		"request_id", middleware.ExtractRequestID(ctx),
+		"request_id", requestID,
 	)
 
 	return url.LongURL, nil

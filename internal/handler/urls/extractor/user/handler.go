@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewExtractingUserURLsHandler(service service.LinkExtractorService, settings *config.Settings) handler.Handler {
+func NewExtractingUserURLsHandler(service service.URLExtractorService, settings *config.Settings) handler.Handler {
 	return &extractingUserURLsHandler{
 		service: service,
 		baseURL: settings.GetBaseURL(),
@@ -21,7 +21,7 @@ func NewExtractingUserURLsHandler(service service.LinkExtractorService, settings
 
 type extractingUserURLsHandler struct {
 	baseURL string
-	service service.LinkExtractorService
+	service service.URLExtractorService
 }
 
 // Handle GetUserURLs godoc

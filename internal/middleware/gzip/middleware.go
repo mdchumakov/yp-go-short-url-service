@@ -47,20 +47,25 @@ func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
 
 		// Сервис должен уметь возвращать ответ в сжатом формате (с HTTP-заголовком Content-Encoding).
 		gw := gzip.NewWriter(c.Writer)
-		defer func(gz *gzip.Writer) {
-			err := gz.Close()
-			if err != nil {
-				log.Errorw("failed to close gzip writer", "error", err)
-			}
-		}(gw)
 
-		if err := compressResponse(c, gw); err != nil {
-			log.Errorw("failed to compress response", "error", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		// Создаем кастомный response writer
+		writer := &gzipResponseBodyWriter{
+			ResponseWriter: c.Writer,
+			writer:         gw,
 		}
+		c.Writer = writer
+
+		// Устанавливаем заголовки для сжатого ответа
+		c.Header("Content-Encoding", "gzip")
+		c.Header("Content-Type", c.Request.Header.Get("Content-Type"))
+		c.Writer.Header().Add("Vary", "Accept-Encoding")
 
 		c.Next()
+
+		// Закрываем gzip writer через response writer
+		if err := writer.Close(); err != nil {
+			log.Errorw("failed to close gzip writer", "error", err)
+		}
 	}
 }
 
@@ -88,19 +93,5 @@ func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
 	}()
 
 	c.Request.Body = gz
-	return nil
-}
-
-func compressResponse(c *gin.Context, gw *gzip.Writer) error {
-	writer := &gzipResponseBodyWriter{
-		ResponseWriter: c.Writer,
-		writer:         gw,
-	}
-	c.Writer = writer
-
-	c.Header("Content-Encoding", "gzip")
-	c.Header("Content-Type", c.Request.Header.Get("Content-Type"))
-	c.Writer.Header().Add("Vary", "Accept-Encoding")
-
 	return nil
 }

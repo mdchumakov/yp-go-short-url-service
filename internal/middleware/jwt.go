@@ -35,6 +35,8 @@ func JWTAuthMiddleware(
 	logger *zap.SugaredLogger,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var tokenFromHeader string
+
 		ctx := c.Request.Context()
 		requestID := ExtractRequestID(ctx)
 
@@ -43,6 +45,7 @@ func JWTAuthMiddleware(
 		if token == "" {
 			logger.Debugw("No JWT token found in request Cookie", "request_id", requestID)
 			token = extractTokenFromHeader(c)
+			tokenFromHeader = token
 		}
 		cookieHeader := c.GetHeader("Cookie")
 		if token == "" {
@@ -73,6 +76,7 @@ func JWTAuthMiddleware(
 		}
 
 		// Проверяем, не истек ли токен
+		logger.Debugw("Checking token expiration", "token", token)
 		expired, err := jwtService.IsTokenExpired(ctx, token)
 		if err != nil {
 			logger.Errorw("Failed to check token expiration", "error", err)
@@ -120,7 +124,7 @@ func JWTAuthMiddleware(
 			"is_anonymous", user.IsAnonymous,
 			"request_id", requestID,
 		)
-		if cookieHeader == "" && !isAnonAllowed {
+		if cookieHeader == "" && tokenFromHeader == "" && !isAnonAllowed {
 			// Срабатывает в том случае, если к нам пришли без кук, мы не можем ходить дальше, но можем выдать новый токен
 			c.JSON(http.StatusNoContent, gin.H{"message": "JWT cookie set"})
 			c.Abort()

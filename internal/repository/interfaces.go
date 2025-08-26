@@ -52,4 +52,5 @@ type UserURLsRepositoryReader interface {
 type UserURLsRepositoryWriter interface {
 	CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error
 	CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error
+	DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error
 }

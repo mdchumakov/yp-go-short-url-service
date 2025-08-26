@@ -175,3 +175,54 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 
 	return tx.Commit(ctx)
 }
+
+func (r *userURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	if userID == "" {
+		return errors.New("userID cannot be empty")
+	}
+	if len(shortURLs) == 0 {
+		return nil
+	}
+
+	// Начинаем транзакцию
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// Отложенный rollback
+	defer func() {
+		if err != nil {
+			rollbackErr := tx.Rollback(ctx)
+			if rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
+		}
+	}()
+
+	// Подготавливаем запрос для мягкого удаления URL-адресов
+	// Обновляем is_deleted на true только для URL-адресов, которые принадлежат указанному пользователю
+	query := `
+		UPDATE urls 
+		SET is_deleted = true, updated_at = NOW()
+		WHERE short_url = ANY($1) 
+		AND id IN (
+			SELECT uu.url_id 
+			FROM user_urls uu 
+			WHERE uu.user_id = $2
+		)
+	`
+	// Выполняем обновление
+	_, err = tx.Exec(ctx, query, shortURLs, userID)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete URLs: %w", err)
+	}
+
+	// Подтверждаем транзакцию
+	err = tx.Commit(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}

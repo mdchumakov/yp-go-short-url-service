@@ -12,7 +12,7 @@ import (
 func NewURLShortenerService(
 	urlRepository repository.URLRepository,
 	userURLsRepository repository.UserURLsRepository,
-) service.LinkShortenerService {
+) service.URLShortenerService {
 	return &urlShortenerService{
 		urlRepository:      urlRepository,
 		userURLsRepository: userURLsRepository,
@@ -192,7 +192,7 @@ func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (str
 			"long_url", longURL,
 			"request_id", requestID,
 		)
-		return *shortURLFromStorage, ErrURLAlreadyExists
+		return *shortURLFromStorage, service.ErrURLAlreadyExists
 	}
 
 	logger.Infow("Short URL not found in storage, generating new one",

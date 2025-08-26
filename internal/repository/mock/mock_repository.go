@@ -496,6 +496,20 @@ func (mr *MockUserURLsRepositoryMockRecorder) CreateURLWithUser(ctx, url, userID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLWithUser", reflect.TypeOf((*MockUserURLsRepository)(nil).CreateURLWithUser), ctx, url, userID)
 }
 
+// DeleteURLsWithUser mocks base method.
+func (m *MockUserURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsWithUser", ctx, shortURLs, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsWithUser indicates an expected call of DeleteURLsWithUser.
+func (mr *MockUserURLsRepositoryMockRecorder) DeleteURLsWithUser(ctx, shortURLs, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsWithUser", reflect.TypeOf((*MockUserURLsRepository)(nil).DeleteURLsWithUser), ctx, shortURLs, userID)
+}
+
 // GetByUserID mocks base method.
 func (m *MockUserURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	m.ctrl.T.Helper()
@@ -598,4 +612,18 @@ func (m *MockUserURLsRepositoryWriter) CreateURLWithUser(ctx context.Context, ur
 func (mr *MockUserURLsRepositoryWriterMockRecorder) CreateURLWithUser(ctx, url, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLWithUser", reflect.TypeOf((*MockUserURLsRepositoryWriter)(nil).CreateURLWithUser), ctx, url, userID)
+}
+
+// DeleteURLsWithUser mocks base method.
+func (m *MockUserURLsRepositoryWriter) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsWithUser", ctx, shortURLs, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsWithUser indicates an expected call of DeleteURLsWithUser.
+func (mr *MockUserURLsRepositoryWriterMockRecorder) DeleteURLsWithUser(ctx, shortURLs, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsWithUser", reflect.TypeOf((*MockUserURLsRepositoryWriter)(nil).DeleteURLsWithUser), ctx, shortURLs, userID)
 }

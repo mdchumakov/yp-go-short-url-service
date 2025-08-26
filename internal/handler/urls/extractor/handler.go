@@ -10,10 +10,10 @@ import (
 )
 
 type extractingLongURLHandler struct {
-	service service.LinkExtractorService
+	service service.URLExtractorService
 }
 
-func NewExtractingFullLinkHandler(service service.LinkExtractorService) handler.Handler {
+func NewExtractingFullLinkHandler(service service.URLExtractorService) handler.Handler {
 	return &extractingLongURLHandler{
 		service: service,
 	}
@@ -46,6 +46,14 @@ func (h *extractingLongURLHandler) Handle(c *gin.Context) {
 
 	longURL, err := h.service.ExtractLongURL(c.Request.Context(), shortURL)
 	if err != nil {
+		if service.IsDeletedError(err) {
+			logger.Infow("Ссылка была удалена",
+				"request_id", requestID,
+			)
+			c.String(http.StatusGone, "Ссылка была удалена")
+			return
+		}
+
 		logger.Errorw(
 			"Ошибка при извлечении длинной ссылки",
 			"error", err,

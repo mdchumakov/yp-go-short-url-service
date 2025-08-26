@@ -6,6 +6,7 @@ import (
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/handler/health"
+	urlsDestructorAPIHandler "yp-go-short-url-service/internal/handler/urls/destructor"
 	urlExtractorHandler "yp-go-short-url-service/internal/handler/urls/extractor"
 	userURLsHandler "yp-go-short-url-service/internal/handler/urls/extractor/user"
 	shortenBatchAPI "yp-go-short-url-service/internal/handler/urls/shortener/batch"
@@ -20,6 +21,7 @@ import (
 	healthService "yp-go-short-url-service/internal/service/health"
 	initService "yp-go-short-url-service/internal/service/init"
 	jwtService "yp-go-short-url-service/internal/service/jwt"
+	urlDestructorService "yp-go-short-url-service/internal/service/urls/destructor"
 	urlExtractorService "yp-go-short-url-service/internal/service/urls/extractor"
 	urlShortenerService "yp-go-short-url-service/internal/service/urls/shortener"
 
@@ -36,6 +38,7 @@ type App struct {
 	shortLinksHandler         handler.Handler
 	shortLinksHandlerAPI      handler.Handler
 	shortLinksBatchHandlerAPI handler.Handler
+	destructorAPIHandler      handler.Handler
 	fullLinkHandler           handler.Handler
 	userURLsHandler           handler.Handler
 	pingHandler               handler.Handler
@@ -75,12 +78,14 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	pingService := healthService.NewHealthCheckService(repoURLs)
 	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs, userURLsRepo)
 	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo)
+	URLDestructorService := urlDestructorService.NewURLDestructorService(repoURLs, userURLsRepo)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
 	UserURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService, settings)
 	URLShortenerHandler := urlShortenerHandler.NewCreatingShortLinksHandler(URLShortenerService, settings)
 	URLShortenerAPIHandler := shortenAPI.NewCreatingShortURLsAPIHandler(URLShortenerService, settings)
 	URLShortenerBatchAPIHandler := shortenBatchAPI.NewCreatingShortURLsByBatchAPIHandler(URLShortenerService, settings)
+	URLDestructorAPIHandler := urlsDestructorAPIHandler.NewUsersURLsDestructorAPIHandler(URLDestructorService)
 	HealthHandler := health.NewPingHandler(pingService)
 
 	return &App{
@@ -88,6 +93,7 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		shortLinksHandler:         URLShortenerHandler,
 		shortLinksHandlerAPI:      URLShortenerAPIHandler,
 		shortLinksBatchHandlerAPI: URLShortenerBatchAPIHandler,
+		destructorAPIHandler:      URLDestructorAPIHandler,
 		fullLinkHandler:           URLExtractorHandler,
 		userURLsHandler:           UserURLsHandler,
 		pingHandler:               HealthHandler,
@@ -123,6 +129,7 @@ func (a *App) SetupRoutes() {
 	privateGroup.Use(anonNotAllowedMiddleware)
 	{
 		privateGroup.GET("/api/user/urls", a.userURLsHandler.Handle)
+		privateGroup.DELETE("/api/user/urls", a.destructorAPIHandler.Handle)
 	}
 
 	a.router.GET("/:shortURL", a.fullLinkHandler.Handle)

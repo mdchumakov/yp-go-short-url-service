@@ -8,14 +8,19 @@ import (
 	"yp-go-short-url-service/internal/model"
 )
 
-type LinkShortenerService interface {
+type URLShortenerService interface {
 	ShortURL(ctx context.Context, longURL string) (string, error)
 	ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error)
 }
 
-type LinkExtractorService interface {
+type URLExtractorService interface {
 	ExtractLongURL(ctx context.Context, shortURL string) (string, error)
 	ExtractUserURLs(ctx context.Context, userID string) ([]*model.URLsModel, error)
+}
+
+type URLDestructorService interface {
+	DeleteURL(ctx context.Context, shortURL string) error
+	DeleteURLsByBatch(ctx context.Context, shortURLs []string) error
 }
 
 type HealthCheckService interface {

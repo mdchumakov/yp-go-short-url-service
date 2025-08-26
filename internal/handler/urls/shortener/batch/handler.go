@@ -14,7 +14,7 @@ import (
 )
 
 func NewCreatingShortURLsByBatchAPIHandler(
-	service service.LinkShortenerService,
+	service service.URLShortenerService,
 	settings *config.Settings,
 ) handler.Handler {
 	return &creatingShortURLsByBatchAPIHandler{
@@ -24,7 +24,7 @@ func NewCreatingShortURLsByBatchAPIHandler(
 }
 
 type creatingShortURLsByBatchAPIHandler struct {
-	service service.LinkShortenerService
+	service service.URLShortenerService
 	baseURL string
 }
 
