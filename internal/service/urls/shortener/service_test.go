@@ -10,6 +10,7 @@ import (
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/repository/mock"
+	services "yp-go-short-url-service/internal/service"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +100,7 @@ func Test_linkShortenerService_ShortURL(t *testing.T) {
 
 		// Проверяем результат - теперь должна возвращаться ошибка
 		assert.Error(t, err)
-		assert.Equal(t, ErrURLAlreadyExists, err)
+		assert.Equal(t, services.ErrURLAlreadyExists, err)
 		assert.Equal(t, existingShortURL, result)
 	})
 
@@ -715,7 +716,7 @@ func Test_urlShortenerService_ShortURL_ConflictScenarios(t *testing.T) {
 
 		// Проверяем результат - должна возвращаться ошибка конфликта
 		assert.Error(t, err)
-		assert.Equal(t, ErrURLAlreadyExists, err)
+		assert.Equal(t, services.ErrURLAlreadyExists, err)
 		assert.Equal(t, existingShortURL, result)
 	})
 
@@ -757,9 +758,9 @@ func Test_urlShortenerService_ShortURL_ConflictScenarios(t *testing.T) {
 
 	t.Run("проверка IsAlreadyExistsError функции", func(t *testing.T) {
 		// Тестируем функцию проверки ошибки
-		assert.True(t, IsAlreadyExistsError(ErrURLAlreadyExists))
-		assert.False(t, IsAlreadyExistsError(errors.New("other error")))
-		assert.False(t, IsAlreadyExistsError(nil))
+		assert.True(t, services.IsAlreadyExistsError(services.ErrURLAlreadyExists))
+		assert.False(t, services.IsAlreadyExistsError(errors.New("other error")))
+		assert.False(t, services.IsAlreadyExistsError(nil))
 	})
 
 	t.Run("конфликт в пакетном режиме - все URL уже существуют", func(t *testing.T) {

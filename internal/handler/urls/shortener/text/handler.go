@@ -9,7 +9,6 @@ import (
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/service"
-	"yp-go-short-url-service/internal/service/urls/shortener"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +76,7 @@ func (h *CreatingShortLinks) Handle(c *gin.Context) {
 
 	shortedURL, err := h.service.ShortURL(c.Request.Context(), longURL)
 	if err != nil {
-		if shortener.IsAlreadyExistsError(err) && shortedURL != "" {
+		if service.IsAlreadyExistsError(err) && shortedURL != "" {
 			logger.Warnw("URL already exists in storage", "long_url", longURL, "request_id", requestID)
 			resultURL := h.buildShortURL(shortedURL)
 			c.String(http.StatusConflict, resultURL)
