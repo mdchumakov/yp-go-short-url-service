@@ -7,6 +7,8 @@ import (
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/service"
+
+	"go.uber.org/zap"
 )
 
 func NewURLDestructorService(
@@ -31,7 +33,8 @@ func NewURLDestructorService(
 type deleteRequest struct {
 	shortURLs []string
 	userID    string
-	ctx       context.Context
+	requestID string
+	logger    *zap.SugaredLogger
 }
 
 type urlDestructorService struct {
@@ -49,14 +52,15 @@ func (s *urlDestructorService) deleteWorker() {
 	for {
 		select {
 		case req := <-s.deleteChan:
+			// Создаем новый контекст для асинхронной операции
+			ctx := context.Background()
+
 			// Выполняем удаление в отдельной горутине
-			err := s.userURLsRepository.DeleteURLsWithUser(req.ctx, req.shortURLs, req.userID)
+			err := s.userURLsRepository.DeleteURLsWithUser(ctx, req.shortURLs, req.userID)
 			if err != nil {
-				logger := middleware.GetLogger(req.ctx)
-				requestID := middleware.ExtractRequestID(req.ctx)
-				logger.Errorw("Failed to delete URLs from storage in async worker",
+				req.logger.Errorw("Failed to delete URLs from storage in async worker",
 					"error", err,
-					"request_id", requestID,
+					"request_id", req.requestID,
 					"short_urls", req.shortURLs,
 					"user_id", req.userID,
 				)
@@ -98,7 +102,8 @@ func (s *urlDestructorService) DeleteURLsByBatch(ctx context.Context, shortURLs 
 	case s.deleteChan <- deleteRequest{
 		shortURLs: shortURLs,
 		userID:    user.ID,
-		ctx:       ctx,
+		requestID: requestID,
+		logger:    logger,
 	}:
 		logger.Debugw("URL deletion request sent to async worker",
 			"request_id", requestID,
