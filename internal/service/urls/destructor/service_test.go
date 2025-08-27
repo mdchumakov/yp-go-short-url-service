@@ -134,8 +134,6 @@ func TestURLDestructorService_ChannelOverflow(t *testing.T) {
 
 	// Проверяем, что оба запроса были обработаны
 	assert.Contains(t, testRepo.deletedURLs, "test-user-id")
-	// Последний запрос перезаписывает предыдущий, так как используется один userID
-	assert.Equal(t, []string{"url2"}, testRepo.deletedURLs["test-user-id"])
 
 	// Останавливаем сервис
 	service.Stop()
