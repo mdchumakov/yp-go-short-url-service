@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
 	"yp-go-short-url-service/internal/app"
 	"yp-go-short-url-service/internal/config"
 )
@@ -31,9 +34,21 @@ func main() {
 	service.SetupCommonMiddlewares()
 	service.SetupRoutes()
 
-	err = service.Run()
+	// Создаем канал для сигналов завершения
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	if err != nil {
-		logger.Fatal(err)
-	}
+	// Запускаем сервер в горутине
+	go func() {
+		if err := service.Run(); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	// Ждем сигнала завершения
+	<-sigChan
+	logger.Info("Received shutdown signal")
+
+	// Корректно останавливаем приложение
+	service.Stop()
 }

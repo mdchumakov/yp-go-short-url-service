@@ -21,6 +21,7 @@ type URLExtractorService interface {
 type URLDestructorService interface {
 	DeleteURL(ctx context.Context, shortURL string) error
 	DeleteURLsByBatch(ctx context.Context, shortURLs []string) error
+	Stop()
 }
 
 type HealthCheckService interface {

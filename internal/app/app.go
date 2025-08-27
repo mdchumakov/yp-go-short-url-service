@@ -48,8 +48,9 @@ type App struct {
 }
 
 type Services struct {
-	auth service.AuthService
-	jwt  service.JWTService
+	auth          service.AuthService
+	jwt           service.JWTService
+	urlDestructor service.URLDestructorService
 }
 
 func NewApp(logger *zap.SugaredLogger) *App {
@@ -98,8 +99,9 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		userURLsHandler:           UserURLsHandler,
 		pingHandler:               HealthHandler,
 		services: Services{
-			auth: AuthService,
-			jwt:  JWTService,
+			auth:          AuthService,
+			jwt:           JWTService,
+			urlDestructor: URLDestructorService,
 		},
 		settings: settings,
 		logger:   logger,
@@ -139,4 +141,13 @@ func (a *App) SetupRoutes() {
 func (a *App) Run() error {
 	err := a.router.Run(a.settings.GetServerAddress())
 	return err
+}
+
+// Stop - корректно останавливает приложение
+func (a *App) Stop() {
+	a.logger.Info("Stopping application...")
+	if a.services.urlDestructor != nil {
+		a.services.urlDestructor.Stop()
+	}
+	a.logger.Info("Application stopped")
 }
