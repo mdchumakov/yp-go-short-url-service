@@ -12,6 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// contextKey - тип для ключей контекста в тестах
+type contextKey string
+
+const (
+	loggerKey    contextKey = "logger"
+	requestIDKey contextKey = "request_id"
+)
+
 func TestURLDestructorService_DeleteURLsByBatch_Async(t *testing.T) {
 	// Создаем простую реализацию репозитория для тестирования
 	testRepo := &testUserURLsRepository{
@@ -25,8 +33,8 @@ func TestURLDestructorService_DeleteURLsByBatch_Async(t *testing.T) {
 	// Создаем контекст с логгером и пользователем
 	logger, _ := zap.NewDevelopment()
 	sugaredLogger := logger.Sugar()
-	ctx := context.WithValue(context.Background(), "logger", sugaredLogger)
-	ctx = context.WithValue(ctx, "request_id", "test-request-id")
+	ctx := context.WithValue(context.Background(), loggerKey, sugaredLogger)
+	ctx = context.WithValue(ctx, requestIDKey, "test-request-id")
 
 	// Создаем тестового пользователя и добавляем в контекст
 	user := &model.UserModel{
@@ -107,8 +115,8 @@ func TestURLDestructorService_ChannelOverflow(t *testing.T) {
 	// Создаем контекст
 	logger, _ := zap.NewDevelopment()
 	sugaredLogger := logger.Sugar()
-	ctx := context.WithValue(context.Background(), "logger", sugaredLogger)
-	ctx = context.WithValue(ctx, "request_id", "test-request-id")
+	ctx := context.WithValue(context.Background(), loggerKey, sugaredLogger)
+	ctx = context.WithValue(ctx, requestIDKey, "test-request-id")
 
 	user := &model.UserModel{ID: "test-user-id"}
 	ctx = context.WithValue(ctx, middleware.JWTTokenContextKey, user)
