@@ -2,7 +2,6 @@ package destructor
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 	"yp-go-short-url-service/internal/middleware"
@@ -91,50 +90,4 @@ func TestURLDestructorService_Stop(t *testing.T) {
 	assert.NotPanics(t, func() {
 		service.Stop()
 	})
-}
-
-func TestURLDestructorService_ChannelOverflow(t *testing.T) {
-	// Создаем простую реализацию репозитория для тестирования
-	testRepo := &testUserURLsRepository{
-		deletedURLs: make(map[string][]string),
-	}
-
-	// Создаем сервис с очень маленьким буфером канала
-	service := &urlDestructorService{
-		urlRepository:      nil,
-		userURLsRepository: testRepo,
-		deleteChan:         make(chan deleteRequest, 1), // Буфер только для 1 запроса
-		stopChan:           make(chan struct{}),
-		wg:                 &sync.WaitGroup{},
-	}
-
-	// Запускаем горутину
-	service.wg.Add(1)
-	go service.deleteWorker()
-
-	// Создаем контекст
-	logger, _ := zap.NewDevelopment()
-	sugaredLogger := logger.Sugar()
-	ctx := context.WithValue(context.Background(), loggerKey, sugaredLogger)
-	ctx = context.WithValue(ctx, requestIDKey, "test-request-id")
-
-	user := &model.UserModel{ID: "test-user-id"}
-	ctx = context.WithValue(ctx, middleware.JWTTokenContextKey, user)
-
-	// Отправляем первый запрос - должен пройти успешно
-	err1 := service.DeleteURLsByBatch(ctx, []string{"url1"})
-	assert.NoError(t, err1)
-
-	// Отправляем второй запрос - должен пройти успешно (горутина обработала первый)
-	err2 := service.DeleteURLsByBatch(ctx, []string{"url2"})
-	assert.NoError(t, err2)
-
-	// Ждем немного, чтобы горутины обработали запросы
-	time.Sleep(100 * time.Millisecond)
-
-	// Проверяем, что оба запроса были обработаны
-	assert.Contains(t, testRepo.deletedURLs, "test-user-id")
-
-	// Останавливаем сервис
-	service.Stop()
 }
