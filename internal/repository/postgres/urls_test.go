@@ -73,14 +73,22 @@ func TestURLsRepository_GetByLongURL_Success(t *testing.T) {
 		ID:        1,
 		ShortURL:  "abc123",
 		LongURL:   "https://example.com/very/long/url",
+		IsDeleted: false,
 		CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"}).
-		AddRow(expectedURL.ID, expectedURL.ShortURL, expectedURL.LongURL, expectedURL.CreatedAt, expectedURL.UpdatedAt)
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"}).
+		AddRow(
+			expectedURL.ID,
+			expectedURL.ShortURL,
+			expectedURL.LongURL,
+			expectedURL.IsDeleted,
+			expectedURL.CreatedAt,
+			expectedURL.UpdatedAt,
+		)
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(expectedURL.LongURL).
 		WillReturnRows(rows)
 
@@ -90,6 +98,7 @@ func TestURLsRepository_GetByLongURL_Success(t *testing.T) {
 	assert.Equal(t, expectedURL.ID, result.ID)
 	assert.Equal(t, expectedURL.ShortURL, result.ShortURL)
 	assert.Equal(t, expectedURL.LongURL, result.LongURL)
+	assert.Equal(t, expectedURL.IsDeleted, result.IsDeleted)
 	assert.Equal(t, expectedURL.CreatedAt, result.CreatedAt)
 	assert.Equal(t, expectedURL.UpdatedAt, result.UpdatedAt)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -102,7 +111,7 @@ func TestURLsRepository_GetByLongURL_NotFound(t *testing.T) {
 	ctx := context.Background()
 	longURL := "https://example.com/not/found"
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(longURL).
 		WillReturnError(pgx.ErrNoRows)
 
@@ -121,7 +130,7 @@ func TestURLsRepository_GetByLongURL_DatabaseError(t *testing.T) {
 	longURL := "https://example.com/error"
 	expectedErr := errors.New("database error")
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE long_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE long_url = \\$1 AND is_deleted = false").
 		WithArgs(longURL).
 		WillReturnError(expectedErr)
 
@@ -141,14 +150,15 @@ func TestURLsRepository_GetByShortURL_Success(t *testing.T) {
 		ID:        1,
 		ShortURL:  "abc123",
 		LongURL:   "https://example.com/very/long/url",
+		IsDeleted: false,
 		CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"}).
-		AddRow(expectedURL.ID, expectedURL.ShortURL, expectedURL.LongURL, expectedURL.CreatedAt, expectedURL.UpdatedAt)
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"}).
+		AddRow(expectedURL.ID, expectedURL.ShortURL, expectedURL.LongURL, expectedURL.IsDeleted, expectedURL.CreatedAt, expectedURL.UpdatedAt)
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(expectedURL.ShortURL).
 		WillReturnRows(rows)
 
@@ -158,6 +168,7 @@ func TestURLsRepository_GetByShortURL_Success(t *testing.T) {
 	assert.Equal(t, expectedURL.ID, result.ID)
 	assert.Equal(t, expectedURL.ShortURL, result.ShortURL)
 	assert.Equal(t, expectedURL.LongURL, result.LongURL)
+	assert.Equal(t, expectedURL.IsDeleted, result.IsDeleted)
 	assert.Equal(t, expectedURL.CreatedAt, result.CreatedAt)
 	assert.Equal(t, expectedURL.UpdatedAt, result.UpdatedAt)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -170,7 +181,7 @@ func TestURLsRepository_GetByShortURL_NotFound(t *testing.T) {
 	ctx := context.Background()
 	shortURL := "notfound"
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(shortURL).
 		WillReturnError(pgx.ErrNoRows)
 
@@ -189,7 +200,7 @@ func TestURLsRepository_GetByShortURL_DatabaseError(t *testing.T) {
 	shortURL := "error"
 	expectedErr := errors.New("database error")
 
-	mock.ExpectQuery("SELECT \\* FROM urls WHERE short_url = \\$1").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE short_url = \\$1").
 		WithArgs(shortURL).
 		WillReturnError(expectedErr)
 
@@ -371,6 +382,7 @@ func TestURLsRepository_GetAll_Success(t *testing.T) {
 			ID:        1,
 			ShortURL:  "abc123",
 			LongURL:   "https://example1.com",
+			IsDeleted: false,
 			CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
@@ -378,17 +390,18 @@ func TestURLsRepository_GetAll_Success(t *testing.T) {
 			ID:        2,
 			ShortURL:  "def456",
 			LongURL:   "https://example2.com",
+			IsDeleted: false,
 			CreatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"})
 	for _, url := range expectedURLs {
-		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.IsDeleted, url.CreatedAt, url.UpdatedAt)
 	}
 
-	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE is_deleted = false ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
@@ -399,9 +412,11 @@ func TestURLsRepository_GetAll_Success(t *testing.T) {
 	assert.Equal(t, expectedURLs[0].ID, result[0].ID)
 	assert.Equal(t, expectedURLs[0].ShortURL, result[0].ShortURL)
 	assert.Equal(t, expectedURLs[0].LongURL, result[0].LongURL)
+	assert.Equal(t, expectedURLs[0].IsDeleted, result[0].IsDeleted)
 	assert.Equal(t, expectedURLs[1].ID, result[1].ID)
 	assert.Equal(t, expectedURLs[1].ShortURL, result[1].ShortURL)
 	assert.Equal(t, expectedURLs[1].LongURL, result[1].LongURL)
+	assert.Equal(t, expectedURLs[1].IsDeleted, result[1].IsDeleted)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -412,9 +427,9 @@ func TestURLsRepository_GetAll_EmptyResult(t *testing.T) {
 	ctx := context.Background()
 	limit, offset := 10, 0
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"})
 
-	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE is_deleted = false ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
@@ -436,17 +451,18 @@ func TestURLsRepository_GetAll_WithPagination(t *testing.T) {
 			ID:        11,
 			ShortURL:  "xyz789",
 			LongURL:   "https://example11.com",
+			IsDeleted: false,
 			CreatedAt: time.Date(2023, 1, 11, 0, 0, 0, 0, time.UTC),
 			UpdatedAt: time.Date(2023, 1, 11, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"})
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"})
 	for _, url := range expectedURLs {
-		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.CreatedAt, url.UpdatedAt)
+		rows.AddRow(url.ID, url.ShortURL, url.LongURL, url.IsDeleted, url.CreatedAt, url.UpdatedAt)
 	}
 
-	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE is_deleted = false ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
@@ -466,7 +482,7 @@ func TestURLsRepository_GetAll_DatabaseError(t *testing.T) {
 	limit, offset := 10, 0
 	expectedErr := errors.New("database connection error")
 
-	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE is_deleted = false ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
 		WithArgs(limit, offset).
 		WillReturnError(expectedErr)
 
@@ -485,10 +501,10 @@ func TestURLsRepository_GetAll_ScanError(t *testing.T) {
 	limit, offset := 10, 0
 
 	// Создаем строки с неправильными типами данных для вызова ошибки сканирования
-	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "created_at", "updated_at"}).
-		AddRow("invalid_id", "abc123", "https://example.com", "invalid_date", "invalid_date")
+	rows := pgxmock.NewRows([]string{"id", "short_url", "long_url", "is_deleted", "created_at", "updated_at"}).
+		AddRow("invalid_id", "abc123", "https://example.com", "invalid_bool", "invalid_date", "invalid_date")
 
-	mock.ExpectQuery("SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
+	mock.ExpectQuery("SELECT id, short_url, long_url, is_deleted, created_at, updated_at FROM urls WHERE is_deleted = false ORDER BY created_at DESC LIMIT \\$1 OFFSET \\$2").
 		WithArgs(limit, offset).
 		WillReturnRows(rows)
 
@@ -507,7 +523,7 @@ func TestURLsRepository_GetTotalCount_Success(t *testing.T) {
 
 	rows := pgxmock.NewRows([]string{"count"}).AddRow(expectedCount)
 
-	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls WHERE is_deleted = false").
 		WillReturnRows(rows)
 
 	result, err := repo.GetTotalCount(ctx)
@@ -525,7 +541,7 @@ func TestURLsRepository_GetTotalCount_ZeroCount(t *testing.T) {
 
 	rows := pgxmock.NewRows([]string{"count"}).AddRow(expectedCount)
 
-	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls WHERE is_deleted = false").
 		WillReturnRows(rows)
 
 	result, err := repo.GetTotalCount(ctx)
@@ -541,7 +557,7 @@ func TestURLsRepository_GetTotalCount_DatabaseError(t *testing.T) {
 	ctx := context.Background()
 	expectedErr := errors.New("database connection error")
 
-	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls").
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM urls WHERE is_deleted = false").
 		WillReturnError(expectedErr)
 
 	result, err := repo.GetTotalCount(ctx)
@@ -664,6 +680,85 @@ func TestURLsRepository_CreateBatch_TransactionError(t *testing.T) {
 	mock.ExpectBegin().WillReturnError(expectedErr)
 
 	err := repo.CreateBatch(ctx, urls)
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_SoftDeleteByShortURLs_Success(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	shortURLs := []string{"abc123", "def456"}
+	userID := "user123"
+
+	// Ожидаем начало транзакции
+	mock.ExpectBegin()
+
+	// Ожидаем выполнение UPDATE запроса
+	mock.ExpectExec("UPDATE urls SET is_deleted = true, updated_at = NOW\\(\\) WHERE short_url = ANY\\(\\$1\\) AND id IN \\( SELECT uu\\.url_id FROM user_urls uu WHERE uu\\.user_id = \\$2 \\)").
+		WithArgs(shortURLs, userID).
+		WillReturnResult(pgxmock.NewResult("UPDATE", 2))
+
+	// Ожидаем подтверждение транзакции
+	mock.ExpectCommit()
+
+	err := repo.SoftDeleteByShortURLs(ctx, shortURLs, userID)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_SoftDeleteByShortURLs_EmptySlice(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+
+	err := repo.SoftDeleteByShortURLs(ctx, []string{}, "user123")
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_SoftDeleteByShortURLs_TransactionError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	shortURLs := []string{"abc123"}
+	userID := "user123"
+	expectedErr := errors.New("transaction error")
+
+	// Ожидаем ошибку при начале транзакции
+	mock.ExpectBegin().WillReturnError(expectedErr)
+
+	err := repo.SoftDeleteByShortURLs(ctx, shortURLs, userID)
+	assert.Error(t, err)
+	assert.Equal(t, expectedErr, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestURLsRepository_SoftDeleteByShortURLs_UpdateError(t *testing.T) {
+	mock, repo := setupMockPool(t)
+	defer mock.Close()
+
+	ctx := context.Background()
+	shortURLs := []string{"abc123"}
+	userID := "user123"
+	expectedErr := errors.New("update error")
+
+	// Ожидаем начало транзакции
+	mock.ExpectBegin()
+
+	// Ожидаем ошибку при выполнении UPDATE запроса
+	mock.ExpectExec("UPDATE urls SET is_deleted = true, updated_at = NOW\\(\\) WHERE short_url = ANY\\(\\$1\\) AND id IN \\( SELECT uu\\.url_id FROM user_urls uu WHERE uu\\.user_id = \\$2 \\)").
+		WithArgs(shortURLs, userID).
+		WillReturnError(expectedErr)
+
+	// Ожидаем откат транзакции
+	mock.ExpectRollback()
+
+	err := repo.SoftDeleteByShortURLs(ctx, shortURLs, userID)
 	assert.Error(t, err)
 	assert.Equal(t, expectedErr, err)
 	assert.NoError(t, mock.ExpectationsWereMet())

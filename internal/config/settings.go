@@ -18,6 +18,7 @@ type ENVSettings struct {
 	PG          *db.PGSettings
 	SQLite      *db.SQLiteSettings
 	FileStorage *db.FileStorageSettings
+	JWT         *JWTSettings
 }
 
 func NewSettings() *Settings {
@@ -108,6 +109,6 @@ func (s *Settings) GetPostgresDSN() string {
 		return dsn
 	}
 
-	// Если нет ни переменной окружения, ни флага, то возвращается пустая строка
-	return ""
+	// Если нет ни переменной окружения, ни флага, то возвращается DefaultPostgresDSN
+	return db.DefaultPostgresDSN
 }

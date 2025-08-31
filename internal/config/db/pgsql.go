@@ -15,6 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const DefaultPostgresDSN = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+
 type PGSettings struct {
 	DSN            string `envconfig:"DATABASE_DSN"`
 	MigrationsPath string `envconfig:"MIGRATIONS_PATH" default:"migrations"`

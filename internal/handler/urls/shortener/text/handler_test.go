@@ -11,6 +11,7 @@ import (
 
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/middleware"
+	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/service/mock"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,24 @@ func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockLinkShortenerService
 	logger, _ := zap.NewDevelopment()
 	router := gin.New()
 	router.Use(middleware.LoggerMiddleware(logger.Sugar()))
+
+	// Добавляем мок JWT middleware для тестов
+	router.Use(func(c *gin.Context) {
+		// Создаем тестового пользователя
+		testUser := &model.UserModel{
+			ID:          "test_user_id",
+			Name:        "test_user",
+			Password:    "",
+			IsAnonymous: false,
+		}
+
+		// Добавляем пользователя в контекст
+		ctx := context.WithValue(c.Request.Context(), middleware.JWTTokenContextKey, testUser)
+		c.Request = c.Request.WithContext(ctx)
+
+		c.Next()
+	})
+
 	router.POST(apiPath, handler.Handle)
 
 	return router, mockService, settings

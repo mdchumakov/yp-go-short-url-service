@@ -9,14 +9,19 @@ import (
 	"yp-go-short-url-service/internal/service"
 )
 
-func NewURLShortenerService(repository repository.URLRepository) service.LinkShortenerService {
+func NewURLShortenerService(
+	urlRepository repository.URLRepository,
+	userURLsRepository repository.UserURLsRepository,
+) service.URLShortenerService {
 	return &urlShortenerService{
-		repository: repository,
+		urlRepository:      urlRepository,
+		userURLsRepository: userURLsRepository,
 	}
 }
 
 type urlShortenerService struct {
-	repository repository.URLRepository
+	urlRepository      repository.URLRepository
+	userURLsRepository repository.UserURLsRepository
 }
 
 func (s *urlShortenerService) ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error) {
@@ -133,13 +138,30 @@ func (s *urlShortenerService) createNewShortURL(ctx context.Context, longURLItem
 func (s *urlShortenerService) saveURLsToStorage(ctx context.Context, urlsForCreation []*model.URLsModel) error {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
+	user := middleware.GetJWTUserFromContext(ctx)
 
-	if err := s.repository.CreateBatch(ctx, urlsForCreation); err != nil {
-		logger.Errorw("Failed to create URL records in database",
-			"error", err,
+	if user != nil {
+		logger.Infow("Associating URLs with user",
+			"user", user,
 			"request_id", requestID,
 		)
-		return err
+		if err := s.userURLsRepository.CreateMultipleURLsWithUser(ctx, urlsForCreation, user.ID); err != nil {
+			logger.Errorw("Failed to associate URLs with user",
+				"error", err,
+			)
+			return err
+		}
+	} else {
+		logger.Warnw("JWT user is nil, skipping user association",
+			"request_id", requestID,
+		)
+		if err := s.urlRepository.CreateBatch(ctx, urlsForCreation); err != nil {
+			logger.Errorw("Failed to create URL records in database",
+				"error", err,
+				"request_id", requestID,
+			)
+			return err
+		}
 	}
 
 	return nil
@@ -170,7 +192,7 @@ func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (str
 			"long_url", longURL,
 			"request_id", requestID,
 		)
-		return *shortURLFromStorage, ErrURLAlreadyExists
+		return *shortURLFromStorage, service.ErrURLAlreadyExists
 	}
 
 	logger.Infow("Short URL not found in storage, generating new one",
@@ -214,8 +236,9 @@ func (s *urlShortenerService) extractShortURLIfExists(ctx context.Context, longU
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
 
-	urlResponse, err := s.repository.GetByLongURL(ctx, longURL)
+	urlResponse, err := s.urlRepository.GetByLongURL(ctx, longURL)
 	if err != nil {
+		logger.Debugw("Failed to extract short URL from storage", "error", err, "request_id", requestID)
 		if repository.IsNotFoundError(err) {
 			logger.Debugw("URL not found in storage",
 				"long_url", longURL,
@@ -240,20 +263,35 @@ func (s *urlShortenerService) extractShortURLIfExists(ctx context.Context, longU
 func (s *urlShortenerService) saveShortURLToStorage(ctx context.Context, url *model.URLsModel) error {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
+	user := middleware.GetJWTUserFromContext(ctx)
 
-	err := s.repository.Create(ctx, url)
-	if err != nil {
-		logger.Errorw("Failed to create URL record in database",
-			"error", err,
+	if user != nil {
+		logger.Debugw("Associating user with URL", "user", user, "request_id", requestID)
+		err := s.userURLsRepository.CreateURLWithUser(ctx, url, user.ID)
+		if err != nil {
+			logger.Errorw("Failed to associate user with URL",
+				"error", err,
+			)
+		}
+	} else {
+		logger.Warnw("JWT user is nil, skipping user association",
+			"short_url", url.ShortURL,
+			"request_id", requestID,
+		)
+		err := s.urlRepository.Create(ctx, url)
+		if err != nil {
+			logger.Errorw("Failed to create URL record in database",
+				"error", err,
+				"short_url", url.ShortURL,
+				"long_url", url.LongURL,
+				"request_id", requestID)
+			return err
+		}
+
+		logger.Debugw("URL record created successfully in database",
 			"short_url", url.ShortURL,
 			"long_url", url.LongURL,
 			"request_id", requestID)
-		return err
 	}
-
-	logger.Debugw("URL record created successfully in database",
-		"short_url", url.ShortURL,
-		"long_url", url.LongURL,
-		"request_id", requestID)
 	return nil
 }

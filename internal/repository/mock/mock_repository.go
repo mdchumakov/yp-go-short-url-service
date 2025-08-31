@@ -7,6 +7,7 @@ package mock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 	model "yp-go-short-url-service/internal/model"
 
 	gomock "github.com/golang/mock/gomock"
@@ -283,4 +284,346 @@ func (m *MockURLRepositoryWriter) CreateBatch(ctx context.Context, urls []*model
 func (mr *MockURLRepositoryWriterMockRecorder) CreateBatch(ctx, urls interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBatch", reflect.TypeOf((*MockURLRepositoryWriter)(nil).CreateBatch), ctx, urls)
+}
+
+// MockUserRepository is a mock of UserRepository interface.
+type MockUserRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserRepositoryMockRecorder
+}
+
+// MockUserRepositoryMockRecorder is the mock recorder for MockUserRepository.
+type MockUserRepositoryMockRecorder struct {
+	mock *MockUserRepository
+}
+
+// NewMockUserRepository creates a new mock instance.
+func NewMockUserRepository(ctrl *gomock.Controller) *MockUserRepository {
+	mock := &MockUserRepository{ctrl: ctrl}
+	mock.recorder = &MockUserRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
+	return m.recorder
+}
+
+// CreateUser mocks base method.
+func (m *MockUserRepository) CreateUser(ctx context.Context, username, password string, expiresAt *time.Time) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", ctx, username, password, expiresAt)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockUserRepositoryMockRecorder) CreateUser(ctx, username, password, expiresAt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserRepository)(nil).CreateUser), ctx, username, password, expiresAt)
+}
+
+// GetUserByID mocks base method.
+func (m *MockUserRepository) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockUserRepositoryMockRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUserRepository)(nil).GetUserByID), ctx, userID)
+}
+
+// GetUserByName mocks base method.
+func (m *MockUserRepository) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByName", ctx, username)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByName indicates an expected call of GetUserByName.
+func (mr *MockUserRepositoryMockRecorder) GetUserByName(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockUserRepository)(nil).GetUserByName), ctx, username)
+}
+
+// MockUserRepositoryCreator is a mock of UserRepositoryCreator interface.
+type MockUserRepositoryCreator struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserRepositoryCreatorMockRecorder
+}
+
+// MockUserRepositoryCreatorMockRecorder is the mock recorder for MockUserRepositoryCreator.
+type MockUserRepositoryCreatorMockRecorder struct {
+	mock *MockUserRepositoryCreator
+}
+
+// NewMockUserRepositoryCreator creates a new mock instance.
+func NewMockUserRepositoryCreator(ctrl *gomock.Controller) *MockUserRepositoryCreator {
+	mock := &MockUserRepositoryCreator{ctrl: ctrl}
+	mock.recorder = &MockUserRepositoryCreatorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserRepositoryCreator) EXPECT() *MockUserRepositoryCreatorMockRecorder {
+	return m.recorder
+}
+
+// CreateUser mocks base method.
+func (m *MockUserRepositoryCreator) CreateUser(ctx context.Context, username, password string, expiresAt *time.Time) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", ctx, username, password, expiresAt)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockUserRepositoryCreatorMockRecorder) CreateUser(ctx, username, password, expiresAt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserRepositoryCreator)(nil).CreateUser), ctx, username, password, expiresAt)
+}
+
+// MockUserRepositoryReader is a mock of UserRepositoryReader interface.
+type MockUserRepositoryReader struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserRepositoryReaderMockRecorder
+}
+
+// MockUserRepositoryReaderMockRecorder is the mock recorder for MockUserRepositoryReader.
+type MockUserRepositoryReaderMockRecorder struct {
+	mock *MockUserRepositoryReader
+}
+
+// NewMockUserRepositoryReader creates a new mock instance.
+func NewMockUserRepositoryReader(ctrl *gomock.Controller) *MockUserRepositoryReader {
+	mock := &MockUserRepositoryReader{ctrl: ctrl}
+	mock.recorder = &MockUserRepositoryReaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserRepositoryReader) EXPECT() *MockUserRepositoryReaderMockRecorder {
+	return m.recorder
+}
+
+// GetUserByID mocks base method.
+func (m *MockUserRepositoryReader) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockUserRepositoryReaderMockRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUserRepositoryReader)(nil).GetUserByID), ctx, userID)
+}
+
+// GetUserByName mocks base method.
+func (m *MockUserRepositoryReader) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByName", ctx, username)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByName indicates an expected call of GetUserByName.
+func (mr *MockUserRepositoryReaderMockRecorder) GetUserByName(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockUserRepositoryReader)(nil).GetUserByName), ctx, username)
+}
+
+// MockUserURLsRepository is a mock of UserURLsRepository interface.
+type MockUserURLsRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserURLsRepositoryMockRecorder
+}
+
+// MockUserURLsRepositoryMockRecorder is the mock recorder for MockUserURLsRepository.
+type MockUserURLsRepositoryMockRecorder struct {
+	mock *MockUserURLsRepository
+}
+
+// NewMockUserURLsRepository creates a new mock instance.
+func NewMockUserURLsRepository(ctrl *gomock.Controller) *MockUserURLsRepository {
+	mock := &MockUserURLsRepository{ctrl: ctrl}
+	mock.recorder = &MockUserURLsRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserURLsRepository) EXPECT() *MockUserURLsRepositoryMockRecorder {
+	return m.recorder
+}
+
+// CreateMultipleURLsWithUser mocks base method.
+func (m *MockUserURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMultipleURLsWithUser", ctx, urls, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateMultipleURLsWithUser indicates an expected call of CreateMultipleURLsWithUser.
+func (mr *MockUserURLsRepositoryMockRecorder) CreateMultipleURLsWithUser(ctx, urls, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMultipleURLsWithUser", reflect.TypeOf((*MockUserURLsRepository)(nil).CreateMultipleURLsWithUser), ctx, urls, userID)
+}
+
+// CreateURLWithUser mocks base method.
+func (m *MockUserURLsRepository) CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLWithUser", ctx, url, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateURLWithUser indicates an expected call of CreateURLWithUser.
+func (mr *MockUserURLsRepositoryMockRecorder) CreateURLWithUser(ctx, url, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLWithUser", reflect.TypeOf((*MockUserURLsRepository)(nil).CreateURLWithUser), ctx, url, userID)
+}
+
+// DeleteURLsWithUser mocks base method.
+func (m *MockUserURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsWithUser", ctx, shortURLs, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsWithUser indicates an expected call of DeleteURLsWithUser.
+func (mr *MockUserURLsRepositoryMockRecorder) DeleteURLsWithUser(ctx, shortURLs, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsWithUser", reflect.TypeOf((*MockUserURLsRepository)(nil).DeleteURLsWithUser), ctx, shortURLs, userID)
+}
+
+// GetByUserID mocks base method.
+func (m *MockUserURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByUserID", ctx, userID)
+	ret0, _ := ret[0].([]*model.URLsModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByUserID indicates an expected call of GetByUserID.
+func (mr *MockUserURLsRepositoryMockRecorder) GetByUserID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockUserURLsRepository)(nil).GetByUserID), ctx, userID)
+}
+
+// MockUserURLsRepositoryReader is a mock of UserURLsRepositoryReader interface.
+type MockUserURLsRepositoryReader struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserURLsRepositoryReaderMockRecorder
+}
+
+// MockUserURLsRepositoryReaderMockRecorder is the mock recorder for MockUserURLsRepositoryReader.
+type MockUserURLsRepositoryReaderMockRecorder struct {
+	mock *MockUserURLsRepositoryReader
+}
+
+// NewMockUserURLsRepositoryReader creates a new mock instance.
+func NewMockUserURLsRepositoryReader(ctrl *gomock.Controller) *MockUserURLsRepositoryReader {
+	mock := &MockUserURLsRepositoryReader{ctrl: ctrl}
+	mock.recorder = &MockUserURLsRepositoryReaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserURLsRepositoryReader) EXPECT() *MockUserURLsRepositoryReaderMockRecorder {
+	return m.recorder
+}
+
+// GetByUserID mocks base method.
+func (m *MockUserURLsRepositoryReader) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByUserID", ctx, userID)
+	ret0, _ := ret[0].([]*model.URLsModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByUserID indicates an expected call of GetByUserID.
+func (mr *MockUserURLsRepositoryReaderMockRecorder) GetByUserID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockUserURLsRepositoryReader)(nil).GetByUserID), ctx, userID)
+}
+
+// MockUserURLsRepositoryWriter is a mock of UserURLsRepositoryWriter interface.
+type MockUserURLsRepositoryWriter struct {
+	ctrl     *gomock.Controller
+	recorder *MockUserURLsRepositoryWriterMockRecorder
+}
+
+// MockUserURLsRepositoryWriterMockRecorder is the mock recorder for MockUserURLsRepositoryWriter.
+type MockUserURLsRepositoryWriterMockRecorder struct {
+	mock *MockUserURLsRepositoryWriter
+}
+
+// NewMockUserURLsRepositoryWriter creates a new mock instance.
+func NewMockUserURLsRepositoryWriter(ctrl *gomock.Controller) *MockUserURLsRepositoryWriter {
+	mock := &MockUserURLsRepositoryWriter{ctrl: ctrl}
+	mock.recorder = &MockUserURLsRepositoryWriterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUserURLsRepositoryWriter) EXPECT() *MockUserURLsRepositoryWriterMockRecorder {
+	return m.recorder
+}
+
+// CreateMultipleURLsWithUser mocks base method.
+func (m *MockUserURLsRepositoryWriter) CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMultipleURLsWithUser", ctx, urls, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateMultipleURLsWithUser indicates an expected call of CreateMultipleURLsWithUser.
+func (mr *MockUserURLsRepositoryWriterMockRecorder) CreateMultipleURLsWithUser(ctx, urls, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMultipleURLsWithUser", reflect.TypeOf((*MockUserURLsRepositoryWriter)(nil).CreateMultipleURLsWithUser), ctx, urls, userID)
+}
+
+// CreateURLWithUser mocks base method.
+func (m *MockUserURLsRepositoryWriter) CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLWithUser", ctx, url, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateURLWithUser indicates an expected call of CreateURLWithUser.
+func (mr *MockUserURLsRepositoryWriterMockRecorder) CreateURLWithUser(ctx, url, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLWithUser", reflect.TypeOf((*MockUserURLsRepositoryWriter)(nil).CreateURLWithUser), ctx, url, userID)
+}
+
+// DeleteURLsWithUser mocks base method.
+func (m *MockUserURLsRepositoryWriter) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsWithUser", ctx, shortURLs, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsWithUser indicates an expected call of DeleteURLsWithUser.
+func (mr *MockUserURLsRepositoryWriterMockRecorder) DeleteURLsWithUser(ctx, shortURLs, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsWithUser", reflect.TypeOf((*MockUserURLsRepositoryWriter)(nil).DeleteURLsWithUser), ctx, shortURLs, userID)
 }

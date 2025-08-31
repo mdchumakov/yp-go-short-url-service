@@ -291,7 +291,7 @@ func TestNewExtractingFullLinkHandler(t *testing.T) {
 		assert.NotNil(t, handler)
 
 		// Проверяем, что это правильный тип
-		extractingHandler, ok := handler.(*ExtractingLongURLHandler)
+		extractingHandler, ok := handler.(*extractingLongURLHandler)
 		assert.True(t, ok)
 		assert.Equal(t, mockService, extractingHandler.service)
 	})

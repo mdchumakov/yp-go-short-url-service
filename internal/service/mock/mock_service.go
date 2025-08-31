@@ -7,6 +7,8 @@ package mock
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
+	model "yp-go-short-url-service/internal/model"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -102,6 +104,21 @@ func (mr *MockLinkExtractorServiceMockRecorder) ExtractLongURL(ctx, shortURL int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractLongURL", reflect.TypeOf((*MockLinkExtractorService)(nil).ExtractLongURL), ctx, shortURL)
 }
 
+// ExtractUserURLs mocks base method.
+func (m *MockLinkExtractorService) ExtractUserURLs(ctx context.Context, userID string) ([]*model.URLsModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExtractUserURLs", ctx, userID)
+	ret0, _ := ret[0].([]*model.URLsModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExtractUserURLs indicates an expected call of ExtractUserURLs.
+func (mr *MockLinkExtractorServiceMockRecorder) ExtractUserURLs(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractUserURLs", reflect.TypeOf((*MockLinkExtractorService)(nil).ExtractUserURLs), ctx, userID)
+}
+
 // MockHealthCheckService is a mock of HealthCheckService interface.
 type MockHealthCheckService struct {
 	ctrl     *gomock.Controller
@@ -174,4 +191,244 @@ func (m *MockDataInitializerService) Setup(ctx context.Context, fileStoragePath 
 func (mr *MockDataInitializerServiceMockRecorder) Setup(ctx, fileStoragePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Setup", reflect.TypeOf((*MockDataInitializerService)(nil).Setup), ctx, fileStoragePath)
+}
+
+// MockAuthService is a mock of AuthService interface.
+type MockAuthService struct {
+	ctrl     *gomock.Controller
+	recorder *MockAuthServiceMockRecorder
+}
+
+// MockAuthServiceMockRecorder is the mock recorder for MockAuthService.
+type MockAuthServiceMockRecorder struct {
+	mock *MockAuthService
+}
+
+// NewMockAuthService creates a new mock instance.
+func NewMockAuthService(ctrl *gomock.Controller) *MockAuthService {
+	mock := &MockAuthService{ctrl: ctrl}
+	mock.recorder = &MockAuthServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockAuthService) EXPECT() *MockAuthServiceMockRecorder {
+	return m.recorder
+}
+
+// CreateAnonymousUser mocks base method.
+func (m *MockAuthService) CreateAnonymousUser(ctx context.Context, clientIP, userAgent string, expiresAt *time.Time) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAnonymousUser", ctx, clientIP, userAgent, expiresAt)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAnonymousUser indicates an expected call of CreateAnonymousUser.
+func (mr *MockAuthServiceMockRecorder) CreateAnonymousUser(ctx, clientIP, userAgent, expiresAt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAnonymousUser", reflect.TypeOf((*MockAuthService)(nil).CreateAnonymousUser), ctx, clientIP, userAgent, expiresAt)
+}
+
+// CreateUser mocks base method.
+func (m *MockAuthService) CreateUser(ctx context.Context, username, password string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", ctx, username, password)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockAuthServiceMockRecorder) CreateUser(ctx, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuthService)(nil).CreateUser), ctx, username, password)
+}
+
+// GenerateAnonymousName mocks base method.
+func (m *MockAuthService) GenerateAnonymousName(clientIP, userAgent string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateAnonymousName", clientIP, userAgent)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GenerateAnonymousName indicates an expected call of GenerateAnonymousName.
+func (mr *MockAuthServiceMockRecorder) GenerateAnonymousName(clientIP, userAgent interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAnonymousName", reflect.TypeOf((*MockAuthService)(nil).GenerateAnonymousName), clientIP, userAgent)
+}
+
+// GetOrCreateAnonymousUser mocks base method.
+func (m *MockAuthService) GetOrCreateAnonymousUser(ctx context.Context, clientIP, userAgent string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrCreateAnonymousUser", ctx, clientIP, userAgent)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOrCreateAnonymousUser indicates an expected call of GetOrCreateAnonymousUser.
+func (mr *MockAuthServiceMockRecorder) GetOrCreateAnonymousUser(ctx, clientIP, userAgent interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateAnonymousUser", reflect.TypeOf((*MockAuthService)(nil).GetOrCreateAnonymousUser), ctx, clientIP, userAgent)
+}
+
+// GetUserByID mocks base method.
+func (m *MockAuthService) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByID", ctx, userID)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockAuthServiceMockRecorder) GetUserByID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockAuthService)(nil).GetUserByID), ctx, userID)
+}
+
+// GetUserByName mocks base method.
+func (m *MockAuthService) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByName", ctx, username)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByName indicates an expected call of GetUserByName.
+func (mr *MockAuthServiceMockRecorder) GetUserByName(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockAuthService)(nil).GetUserByName), ctx, username)
+}
+
+// MockJWTService is a mock of JWTService interface.
+type MockJWTService struct {
+	ctrl     *gomock.Controller
+	recorder *MockJWTServiceMockRecorder
+}
+
+// MockJWTServiceMockRecorder is the mock recorder for MockJWTService.
+type MockJWTServiceMockRecorder struct {
+	mock *MockJWTService
+}
+
+// NewMockJWTService creates a new mock instance.
+func NewMockJWTService(ctrl *gomock.Controller) *MockJWTService {
+	mock := &MockJWTService{ctrl: ctrl}
+	mock.recorder = &MockJWTServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockJWTService) EXPECT() *MockJWTServiceMockRecorder {
+	return m.recorder
+}
+
+// GenerateToken mocks base method.
+func (m *MockJWTService) GenerateToken(ctx context.Context, username string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateToken", ctx, username)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateToken indicates an expected call of GenerateToken.
+func (mr *MockJWTServiceMockRecorder) GenerateToken(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateToken", reflect.TypeOf((*MockJWTService)(nil).GenerateToken), ctx, username)
+}
+
+// GenerateTokenForUser mocks base method.
+func (m *MockJWTService) GenerateTokenForUser(ctx context.Context, user *model.UserModel) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateTokenForUser", ctx, user)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateTokenForUser indicates an expected call of GenerateTokenForUser.
+func (mr *MockJWTServiceMockRecorder) GenerateTokenForUser(ctx, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateTokenForUser", reflect.TypeOf((*MockJWTService)(nil).GenerateTokenForUser), ctx, user)
+}
+
+// GetTokenExpirationTime mocks base method.
+func (m *MockJWTService) GetTokenExpirationTime(ctx context.Context, token string) (*time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTokenExpirationTime", ctx, token)
+	ret0, _ := ret[0].(*time.Time)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTokenExpirationTime indicates an expected call of GetTokenExpirationTime.
+func (mr *MockJWTServiceMockRecorder) GetTokenExpirationTime(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenExpirationTime", reflect.TypeOf((*MockJWTService)(nil).GetTokenExpirationTime), ctx, token)
+}
+
+// GetUserIDFromToken mocks base method.
+func (m *MockJWTService) GetUserIDFromToken(ctx context.Context, token string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserIDFromToken", ctx, token)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserIDFromToken indicates an expected call of GetUserIDFromToken.
+func (mr *MockJWTServiceMockRecorder) GetUserIDFromToken(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserIDFromToken", reflect.TypeOf((*MockJWTService)(nil).GetUserIDFromToken), ctx, token)
+}
+
+// IsTokenExpired mocks base method.
+func (m *MockJWTService) IsTokenExpired(ctx context.Context, token string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsTokenExpired", ctx, token)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsTokenExpired indicates an expected call of IsTokenExpired.
+func (mr *MockJWTServiceMockRecorder) IsTokenExpired(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsTokenExpired", reflect.TypeOf((*MockJWTService)(nil).IsTokenExpired), ctx, token)
+}
+
+// RefreshToken mocks base method.
+func (m *MockJWTService) RefreshToken(ctx context.Context, token string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RefreshToken", ctx, token)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RefreshToken indicates an expected call of RefreshToken.
+func (mr *MockJWTServiceMockRecorder) RefreshToken(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockJWTService)(nil).RefreshToken), ctx, token)
+}
+
+// ValidateToken mocks base method.
+func (m *MockJWTService) ValidateToken(ctx context.Context, token string) (*model.UserModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateToken", ctx, token)
+	ret0, _ := ret[0].(*model.UserModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateToken indicates an expected call of ValidateToken.
+func (mr *MockJWTServiceMockRecorder) ValidateToken(ctx, token interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*MockJWTService)(nil).ValidateToken), ctx, token)
 }

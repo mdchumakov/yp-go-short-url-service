@@ -198,6 +198,125 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/user/urls": {
+            "get": {
+                "description": "Возвращает все URL пользователя. Требует JWT аутентификации. JWT токен должен быть передан через заголовок Authorization в формате 'Bearer \u003ctoken\u003e' или через куки с именем 'token'.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Получить URL пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT токен в заголовке Authorization (Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список URL пользователя успешно получен",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.UserURLResponse"
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "У пользователя нет URL",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/user.UserURLResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован - JWT токен отсутствует или недействителен",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет указанные короткие URL пользователя. Требует JWT аутентификации.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Удалить URL пользователя",
+                "parameters": [
+                    {
+                        "description": "Массив коротких URL для удаления",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "URL успешно удалены",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "415": {
+                        "description": "Неподдерживаемый тип контента",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/ping": {
             "get": {
                 "description": "Проверяет доступность базы данных и возвращает статус сервиса",
@@ -322,6 +441,22 @@ const docTemplate = `{
                 "result": {
                     "description": "Result - сокращенный URL\nexample: \"http://localhost:8080/abc123\"",
                     "type": "string"
+                }
+            }
+        },
+        "user.UserURLResponse": {
+            "description": "Ответ с URL пользователя",
+            "type": "object",
+            "properties": {
+                "original_url": {
+                    "description": "@Description Оригинальный длинный URL\n@Example https://www.example.com/very/long/url/that/needs/to/be/shortened",
+                    "type": "string",
+                    "example": "https://www.example.com/very/long/url/that/needs/to/be/shortened"
+                },
+                "short_url": {
+                    "description": "@Description Сокращенный URL пользователя\n@Example http://localhost:8080/abc123",
+                    "type": "string",
+                    "example": "http://localhost:8080/abc123"
                 }
             }
         }
