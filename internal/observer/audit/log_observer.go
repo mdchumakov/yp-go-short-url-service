@@ -3,7 +3,6 @@ package audit
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -105,12 +104,7 @@ func (o *LogObserver) notifyToRemote(remoteURL string, event Event) error {
 		o.logger.Errorf("Failed to send audit event to remote: %v", err)
 		return err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			o.logger.Errorf("Failed to close audit log file: %v", err)
-		}
-	}(resp.Body)
+	defer resp.Body.Close()
 
 	o.logger.Infow("Response from remote audit log",
 		"status_code", resp.StatusCode,
