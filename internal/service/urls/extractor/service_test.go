@@ -6,13 +6,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"yp-go-short-url-service/internal/observer/audit"
+	mockObserver "yp-go-short-url-service/internal/observer/mock"
 
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository/mock"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 
@@ -24,9 +26,10 @@ func TestNewLinkExtractorService(t *testing.T) {
 	// Создаем моки репозиториев
 	mockURLRepo := mock.NewMockURLRepositoryReader(ctrl)
 	mockUserURLsRepo := mock.NewMockUserURLsRepositoryReader(ctrl)
+	auditEventBus := mockObserver.NewMockSubject[audit.Event](ctrl)
 
 	// Создаем сервис через тестовый конструктор
-	service := NewLinkExtractorService(mockURLRepo, mockUserURLsRepo)
+	service := NewLinkExtractorService(mockURLRepo, mockUserURLsRepo, auditEventBus)
 
 	// Проверяем, что сервис создан корректно
 	assert.NotNil(t, service)

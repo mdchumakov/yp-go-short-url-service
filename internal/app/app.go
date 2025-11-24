@@ -12,6 +12,8 @@ import (
 	shortenBatchAPI "yp-go-short-url-service/internal/handler/urls/shortener/batch"
 	shortenAPI "yp-go-short-url-service/internal/handler/urls/shortener/json"
 	urlShortenerHandler "yp-go-short-url-service/internal/handler/urls/shortener/text"
+	"yp-go-short-url-service/internal/observer"
+	"yp-go-short-url-service/internal/observer/audit"
 
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/middleware/gzip"
@@ -76,9 +78,14 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	AuthService := authService.NewAuthService(userRepo, jwtSettings)
 	JWTService := jwtService.NewJWTService(jwtSettings)
 
+	auditEventBus := observer.NewEventBus[audit.Event]()
+
+	auditLogObserver := audit.NewLogObserver(logger, settings)
+	auditEventBus.Subscribe(auditLogObserver)
+
 	pingService := healthService.NewHealthCheckService(repoURLs)
-	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs, userURLsRepo)
-	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo)
+	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs, userURLsRepo, auditEventBus)
+	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo, auditEventBus)
 	URLDestructorService := urlDestructorService.NewURLDestructorService(repoURLs, userURLsRepo)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)

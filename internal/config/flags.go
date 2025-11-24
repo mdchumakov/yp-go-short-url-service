@@ -7,6 +7,8 @@ type Flags struct {
 	BaseURL         string
 	FileStoragePath string
 	DatabaseDSN     string
+	AuditFile       string
+	AuditURL        string
 }
 
 func NewFlags() *Flags {
@@ -35,6 +37,17 @@ func NewFlags() *Flags {
 		"Строка с адресом подключения к БД",
 	)
 
+	auditFile := flag.String(
+		"audit-file",
+		"",
+		"путь к файлу-приёмнику, в который сохраняются логи аудита",
+	)
+	auditURL := flag.String(
+		"audit-url",
+		"",
+		"полный URL удаленного сервера-приёмника, куда отправляются логи аудита",
+	)
+
 	flag.Parse()
 
 	return &Flags{
@@ -42,5 +55,7 @@ func NewFlags() *Flags {
 		BaseURL:         *redirectURL,
 		FileStoragePath: *fileStoragePath,
 		DatabaseDSN:     *databaseDSN,
+		AuditFile:       *auditFile,
+		AuditURL:        *auditURL,
 	}
 }

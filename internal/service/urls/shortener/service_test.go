@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"yp-go-short-url-service/internal/observer/audit"
+	observerMock "yp-go-short-url-service/internal/observer/mock"
 
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/model"
@@ -12,8 +14,8 @@ import (
 	"yp-go-short-url-service/internal/repository/mock"
 	services "yp-go-short-url-service/internal/service"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 
@@ -25,9 +27,10 @@ func TestNewLinkShortenerService(t *testing.T) {
 	// Создаем моки репозиториев
 	mockURLRepo := mock.NewMockURLRepository(ctrl)
 	mockUserURLsRepo := mock.NewMockUserURLsRepository(ctrl)
+	auditEventBus := observerMock.NewMockSubject[audit.Event](ctrl)
 
 	// Создаем сервис через тестовый конструктор
-	service := NewURLShortenerService(mockURLRepo, mockUserURLsRepo)
+	service := NewURLShortenerService(mockURLRepo, mockUserURLsRepo, auditEventBus)
 
 	// Проверяем, что сервис создан корректно
 	assert.NotNil(t, service)

@@ -18,6 +18,7 @@ type ENVSettings struct {
 	PG          *db.PGSettings
 	SQLite      *db.SQLiteSettings
 	FileStorage *db.FileStorageSettings
+	Audit       *AuditSettings
 	JWT         *JWTSettings
 }
 
@@ -111,4 +112,34 @@ func (s *Settings) GetPostgresDSN() string {
 
 	// Если нет ни переменной окружения, ни флага, то возвращается DefaultPostgresDSN
 	return db.DefaultPostgresDSN
+}
+
+func (s *Settings) GetAuditFilePath() string {
+	// Если указана переменная окружения, то используется она
+	if auditFilePath := strings.TrimSpace(s.EnvSettings.Audit.File); auditFilePath != "" {
+		return auditFilePath
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if auditFilePath := strings.TrimSpace(s.Flags.AuditFile); auditFilePath != "" {
+		return auditFilePath
+	}
+
+	// Если параметр не передан, аудит в файл должен быть отключён.
+	return defaultAuditFilePath
+}
+
+func (s *Settings) GetAuditURL() string {
+	// Если указана переменная окружения, то используется она
+	if auditURL := strings.TrimSpace(s.EnvSettings.Audit.URL); auditURL != "" {
+		return auditURL
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if auditURL := strings.TrimSpace(s.Flags.AuditURL); auditURL != "" {
+		return auditURL
+	}
+
+	// Если параметр не передан, аудит на удалённый сервер должен быть отключён.
+	return defaultAuditURL
 }
