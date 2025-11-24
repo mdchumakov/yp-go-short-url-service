@@ -74,7 +74,8 @@ func checkContent(contentType string) bool {
 	return strings.Contains(contentType, "application/json") ||
 		strings.Contains(contentType, "application/x-gzip") ||
 		strings.Contains(contentType, "text/html") ||
-		strings.Contains(contentType, "plain/text")
+		strings.Contains(contentType, "plain/text") ||
+		strings.Contains(contentType, "text/plain")
 }
 
 func decompressRequest(c *gin.Context, log *zap.SugaredLogger) error {
