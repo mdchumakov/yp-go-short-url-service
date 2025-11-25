@@ -305,7 +305,6 @@ func (s *urlShortenerService) saveShortURLToStorage(ctx context.Context, url *mo
 }
 
 func (s *urlShortenerService) sendNotificationEvent(ctx context.Context, url string) {
-	// Если eventBus не инициализирован, пропускаем отправку события
 	if s.eventBus == nil {
 		return
 	}

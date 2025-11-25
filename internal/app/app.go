@@ -33,6 +33,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
+	"net/http"
+	"net/http/pprof"
 )
 
 type App struct {
@@ -143,11 +145,31 @@ func (a *App) SetupRoutes() {
 
 	a.router.GET("/:shortURL", a.fullLinkHandler.Handle)
 	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Добавляем pprof роуты для профилирования
+	a.setupPprofRoutes()
 }
 
 func (a *App) Run() error {
 	err := a.router.Run(a.settings.GetServerAddress())
 	return err
+}
+
+// setupPprofRoutes настраивает роуты для pprof профилирования
+func (a *App) setupPprofRoutes() {
+	pprofGroup := a.router.Group("/debug/pprof")
+	{
+		pprofGroup.GET("/", gin.WrapH(http.HandlerFunc(pprof.Index)))
+		pprofGroup.GET("/cmdline", gin.WrapH(http.HandlerFunc(pprof.Cmdline)))
+		pprofGroup.GET("/profile", gin.WrapH(http.HandlerFunc(pprof.Profile)))
+		pprofGroup.GET("/symbol", gin.WrapH(http.HandlerFunc(pprof.Symbol)))
+		pprofGroup.GET("/trace", gin.WrapH(http.HandlerFunc(pprof.Trace)))
+		pprofGroup.GET("/heap", gin.WrapH(http.HandlerFunc(pprof.Index)))
+		pprofGroup.GET("/goroutine", gin.WrapH(http.HandlerFunc(pprof.Index)))
+		pprofGroup.GET("/allocs", gin.WrapH(http.HandlerFunc(pprof.Index)))
+		pprofGroup.GET("/block", gin.WrapH(http.HandlerFunc(pprof.Index)))
+		pprofGroup.GET("/mutex", gin.WrapH(http.HandlerFunc(pprof.Index)))
+	}
 }
 
 // Stop - корректно останавливает приложение
