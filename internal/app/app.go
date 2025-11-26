@@ -38,6 +38,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// App представляет основное приложение сервиса сокращения URL.
+// Содержит роутер, обработчики запросов, сервисы и настройки.
 type App struct {
 	router                    *gin.Engine
 	shortLinksHandler         handler.Handler
@@ -52,12 +54,17 @@ type App struct {
 	logger                    *zap.SugaredLogger
 }
 
+// Services содержит коллекцию сервисов приложения.
+// Используется для доступа к сервисам аутентификации, JWT и удаления URL.
 type Services struct {
 	auth          service.AuthService
 	jwt           service.JWTService
 	urlDestructor service.URLDestructorService
 }
 
+// NewApp создает новый экземпляр приложения с инициализированными зависимостями.
+// Инициализирует базу данных, репозитории, сервисы, обработчики и настраивает маршруты.
+// Возвращает готовый к использованию экземпляр App.
 func NewApp(logger *zap.SugaredLogger) *App {
 	ctx := context.Background()
 
@@ -118,12 +125,17 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	}
 }
 
+// SetupCommonMiddlewares настраивает общие middleware для всех маршрутов.
+// Добавляет middleware для request ID, логирования и сжатия ответов (gzip).
 func (a *App) SetupCommonMiddlewares() {
 	a.router.Use(middleware.RequestIDMiddleware(a.logger))
 	a.router.Use(middleware.LoggerMiddleware(a.logger))
 	a.router.Use(gzip.Middleware(a.logger))
 }
 
+// SetupRoutes настраивает маршруты приложения.
+// Создает публичные и приватные группы маршрутов с соответствующими middleware.
+// Настраивает маршруты для сокращения URL, получения URL, удаления URL и health check.
 func (a *App) SetupRoutes() {
 	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
 	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
@@ -151,6 +163,8 @@ func (a *App) SetupRoutes() {
 	a.setupPprofRoutes()
 }
 
+// Run запускает HTTP-сервер приложения на адресе, указанном в настройках.
+// Возвращает ошибку, если сервер не может быть запущен.
 func (a *App) Run() error {
 	err := a.router.Run(a.settings.GetServerAddress())
 	return err
@@ -173,7 +187,8 @@ func (a *App) setupPprofRoutes() {
 	}
 }
 
-// Stop - корректно останавливает приложение
+// Stop корректно останавливает приложение.
+// Останавливает все фоновые сервисы (например, сервис удаления URL) и завершает работу приложения.
 func (a *App) Stop() {
 	a.logger.Info("Stopping application...")
 	if a.services.urlDestructor != nil {

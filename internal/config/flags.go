@@ -2,6 +2,8 @@ package config
 
 import "flag"
 
+// Flags содержит флаги командной строки приложения.
+// Позволяет переопределить настройки из переменных окружения через аргументы командной строки.
 type Flags struct {
 	ServerAddress   string
 	BaseURL         string
@@ -11,6 +13,8 @@ type Flags struct {
 	AuditURL        string
 }
 
+// NewFlags создает новый экземпляр флагов командной строки.
+// Парсит аргументы командной строки и возвращает структуру с установленными значениями.
 func NewFlags() *Flags {
 	connectionAddr := flag.String(
 		"a",

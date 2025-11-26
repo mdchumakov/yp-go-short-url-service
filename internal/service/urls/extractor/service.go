@@ -11,6 +11,8 @@ import (
 	"yp-go-short-url-service/internal/service"
 )
 
+// NewLinkExtractorService создает новый сервис для извлечения URL.
+// Принимает репозитории для чтения URL и шину событий для уведомлений, возвращает реализацию интерфейса URLExtractorService.
 func NewLinkExtractorService(
 	urlRepository repository.URLRepositoryReader,
 	userURLsRepository repository.UserURLsRepositoryReader,
@@ -29,6 +31,8 @@ type linkExtractorService struct {
 	eventBus           baseObserver.Subject[audit.Event]
 }
 
+// ExtractUserURLs извлекает все URL, принадлежащие указанному пользователю.
+// Возвращает список моделей URL или ошибку, если извлечение не удалось.
 func (s *linkExtractorService) ExtractUserURLs(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	logger := middleware.GetLogger(ctx)
 	logger.Infow("Starting user URLs extraction process",
@@ -55,6 +59,8 @@ func (s *linkExtractorService) ExtractUserURLs(ctx context.Context, userID strin
 	return urls, nil
 }
 
+// ExtractLongURL извлекает длинный URL по короткому идентификатору.
+// Возвращает длинный URL или ошибку, если URL не найден, удален или произошла ошибка при извлечении.
 func (s *linkExtractorService) ExtractLongURL(ctx context.Context, shortURL string) (string, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)

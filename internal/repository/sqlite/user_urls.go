@@ -16,15 +16,21 @@ type userURLsRepository struct {
 	db *sql.DB
 }
 
+// DeleteURLsWithUser помечает указанные URL как удаленные для конкретного пользователя в SQLite.
+// Принимает список коротких URL и идентификатор пользователя, возвращает ошибку, если удаление не удалось.
 func (r *userURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
+// NewUserURLsRepository создает новый репозиторий для работы с URL пользователей в SQLite базе данных.
+// Принимает соединение с SQLite и возвращает реализацию интерфейса UserURLsRepository.
 func NewUserURLsRepository(db *sql.DB) repository.UserURLsRepository {
 	return &userURLsRepository{db: db}
 }
 
+// GetByUserID получает все URL, принадлежащие указанному пользователю, из базы данных SQLite.
+// Возвращает список моделей URL, отсортированных по дате создания (от новых к старым), или ошибку.
 func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	query := `
 		SELECT u.id, u.short_url, u.long_url, u.created_at, u.updated_at
@@ -68,6 +74,8 @@ func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]
 	return urls, nil
 }
 
+// CreateURLWithUser создает новую запись URL и связывает ее с пользователем в базе данных SQLite.
+// Принимает модель URL и идентификатор пользователя, возвращает ошибку, если создание не удалось.
 func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error {
 	if userID == "" {
 		return errors.New("userID cannot be empty")
@@ -132,6 +140,8 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	return nil
 }
 
+// CreateMultipleURLsWithUser создает несколько записей URL и связывает их с пользователем в одной транзакции в SQLite.
+// Принимает список моделей URL и идентификатор пользователя, возвращает ошибку, если создание не удалось.
 func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error {
 	if userID == "" {
 		return errors.New("userID cannot be empty")

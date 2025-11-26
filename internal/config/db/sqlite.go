@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// SQLiteSettings содержит настройки подключения к SQLite базе данных.
+// Определяет путь к файлу базы данных SQLite.
 type SQLiteSettings struct {
 	SQLiteDBPath string `envconfig:"SQLITE_DB_PATH" default:"db/test.db" required:"true"`
 }

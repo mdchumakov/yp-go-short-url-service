@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// NewDataInitializerService создает новый сервис инициализации данных.
+// Используется для синхронизации данных между файловым хранилищем и базой данных при запуске приложения.
 func NewDataInitializerService(repo repository.URLRepository, logger *zap.SugaredLogger) service.DataInitializerService {
 	return &dataInitializerService{repo: repo, logger: logger}
 }
@@ -22,6 +24,8 @@ type dataInitializerService struct {
 	logger *zap.SugaredLogger
 }
 
+// Setup инициализирует данные из файлового хранилища в базу данных или наоборот.
+// Если файл существует, загружает данные из файла в БД. Если файла нет, сохраняет данные из БД в файл.
 func (d *dataInitializerService) Setup(ctx context.Context, fileStoragePath string) error {
 	if isFileExists := utils.CheckFileExists(fileStoragePath); !isFileExists {
 		urls, err := d.extractURLSDataFromRepo(ctx)

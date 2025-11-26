@@ -11,13 +11,16 @@ import (
 // RequestIDKeyType - пользовательский тип для ключа Request ID в контексте
 type RequestIDKeyType struct{}
 
-// RequestIDKey - ключ для хранения Request ID в контексте
+// RequestIDKey - ключ для хранения Request ID в контексте.
+// Используется для извлечения уникального идентификатора запроса из контекста.
 var RequestIDKey = RequestIDKeyType{}
 
 const RequestIDHeader = "X-Request-ID"
 const GinRequestIDKey = "request_id"
 
-// RequestIDMiddleware добавляет уникальный ID к каждому запросу для трассировки
+// RequestIDMiddleware добавляет уникальный ID к каждому запросу для трассировки.
+// Генерирует новый UUID, если Request ID отсутствует в заголовке X-Request-ID.
+// Добавляет Request ID в контекст запроса и в заголовки ответа.
 func RequestIDMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Проверяем, есть ли уже Request ID в заголовке
@@ -45,6 +48,8 @@ func RequestIDMiddleware(logger *zap.SugaredLogger) gin.HandlerFunc {
 	}
 }
 
+// ExtractRequestID извлекает Request ID из контекста запроса.
+// Возвращает "unknown", если Request ID не найден в контексте.
 func ExtractRequestID(ctx context.Context) string {
 	if requestID, ok := ctx.Value(RequestIDKey).(string); ok {
 		return requestID

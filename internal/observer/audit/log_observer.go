@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// LogObserver реализует интерфейс Observer для логирования событий аудита.
+// Может отправлять события в файл и/или на удаленный сервер через HTTP.
 type LogObserver struct {
 	id         string
 	logger     *zap.SugaredLogger
@@ -20,6 +22,8 @@ type LogObserver struct {
 	httpClient *http.Client
 }
 
+// NewLogObserver создает новый наблюдатель для логирования событий аудита.
+// Принимает логгер и настройки приложения, возвращает реализацию интерфейса Observer.
 func NewLogObserver(logger *zap.SugaredLogger, settings *config.Settings) base.Observer[Event] {
 
 	httpClient := &http.Client{
@@ -34,10 +38,13 @@ func NewLogObserver(logger *zap.SugaredLogger, settings *config.Settings) base.O
 	}
 }
 
+// GetID возвращает уникальный идентификатор наблюдателя.
 func (o *LogObserver) GetID() string {
 	return o.id
 }
 
+// Notify обрабатывает событие аудита, отправляя его в файл и/или на удаленный сервер.
+// Возвращает ошибку, если отправка не удалась.
 func (o *LogObserver) Notify(_ context.Context, event Event) error {
 
 	if auditFilePath := o.settings.GetAuditFilePath(); auditFilePath != "" {

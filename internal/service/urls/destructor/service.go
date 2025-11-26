@@ -18,6 +18,8 @@ const (
 	channelBufferSize = 100
 )
 
+// NewURLDestructorService создает новый сервис для асинхронного удаления URL.
+// Запускает пул воркеров для обработки запросов на удаление. Возвращает реализацию интерфейса URLDestructorService.
 func NewURLDestructorService(
 	urlRepository repository.URLRepository,
 	userURLsRepository repository.UserURLsRepository,
@@ -94,17 +96,23 @@ func (s *urlDestructorService) deleteWorker(workerID int) {
 	}
 }
 
-// Stop - метод для корректной остановки сервиса
+// Stop корректно останавливает сервис удаления URL.
+// Останавливает всех воркеров и дожидается завершения обработки всех запросов в очереди.
 func (s *urlDestructorService) Stop() {
 	close(s.stopChan)
 	s.wg.Wait()
 }
 
+// DeleteURL удаляет один URL по его короткому идентификатору.
+// В текущей реализации не реализован и вызывает panic.
 func (s *urlDestructorService) DeleteURL(ctx context.Context, shortURL string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
+// DeleteURLsByBatch асинхронно удаляет список URL пользователя.
+// Отправляет запрос на удаление в очередь воркеров и возвращает управление сразу.
+// Возвращает ошибку, если очередь переполнена или пользователь не аутентифицирован.
 func (s *urlDestructorService) DeleteURLsByBatch(ctx context.Context, shortURLs []string) error {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)

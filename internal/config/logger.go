@@ -44,6 +44,8 @@ func SetGlobalLogger(logger *zap.SugaredLogger) {
 	globalLogger = logger
 }
 
+// NewLogger создает новый логгер в зависимости от окружения.
+// Для production окружения создает production логгер, иначе - development логгер.
 func NewLogger(isProd bool) (*zap.SugaredLogger, error) {
 	if isProd {
 		logger, err := zap.NewProduction()
@@ -56,6 +58,8 @@ func NewLogger(isProd bool) (*zap.SugaredLogger, error) {
 	return NewDevLogger()
 }
 
+// NewDevLogger создает development логгер с цветным выводом уровней логирования.
+// Использует консольный энкодер с ISO8601 форматом времени.
 func NewDevLogger() (*zap.SugaredLogger, error) {
 	encoderCfg := zap.NewDevelopmentEncoderConfig()
 	encoderCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -72,6 +76,8 @@ func NewDevLogger() (*zap.SugaredLogger, error) {
 	return logger.Sugar(), nil
 }
 
+// SyncLogger синхронизирует буферы логгера, записывая все ожидающие логи.
+// Игнорирует ошибки, связанные с закрытыми файловыми дескрипторами.
 func SyncLogger(logger *zap.SugaredLogger) {
 	if logger != nil {
 		if err := logger.Sync(); err != nil {

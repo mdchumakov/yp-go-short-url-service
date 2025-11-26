@@ -17,6 +17,8 @@ type creatingShortURLsAPIHandler struct {
 	baseURL string
 }
 
+// NewCreatingShortURLsAPIHandler создает новый обработчик для создания короткой ссылки через JSON API.
+// Принимает сервис сокращения URL и настройки приложения, возвращает обработчик, реализующий интерфейс Handler.
 func NewCreatingShortURLsAPIHandler(
 	service service.URLShortenerService,
 	settings *config.Settings,

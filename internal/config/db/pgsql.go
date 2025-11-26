@@ -15,13 +15,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// DefaultPostgresDSN определяет строку подключения к PostgreSQL по умолчанию.
 const DefaultPostgresDSN = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
 
+// PGSettings содержит настройки подключения к PostgreSQL базе данных.
+// Включает строку подключения (DSN) и путь к миграциям.
 type PGSettings struct {
 	DSN            string `envconfig:"DATABASE_DSN"`
 	MigrationsPath string `envconfig:"MIGRATIONS_PATH" default:"migrations"`
 }
 
+// InitPostgresDB инициализирует пул соединений с PostgreSQL базой данных.
+// Настраивает параметры пула: максимальное и минимальное количество соединений,
+// время жизни соединений и время простоя.
+// Возвращает пул соединений или ошибку, если инициализация не удалась.
 func InitPostgresDB(ctx context.Context, pgDSN string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(pgDSN)
 	if err != nil {
@@ -36,6 +43,9 @@ func InitPostgresDB(ctx context.Context, pgDSN string) (*pgxpool.Pool, error) {
 	return pgxpool.NewWithConfig(ctx, config)
 }
 
+// RunMigrations выполняет миграции базы данных PostgreSQL.
+// Применяет все миграции из указанной директории к базе данных.
+// Возвращает ошибку, если выполнение миграций не удалось.
 func RunMigrations(logger *zap.SugaredLogger, pool *pgxpool.Pool, migrationsPath string) error {
 	conn := stdlib.OpenDBFromPool(pool)
 	defer func(conn *sql.DB) {

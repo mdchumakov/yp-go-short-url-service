@@ -11,7 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PoolInterface определяет интерфейс для пула соединений
+// PoolInterface определяет интерфейс для пула соединений PostgreSQL.
+// Используется для абстракции работы с базой данных и упрощения тестирования.
 type PoolInterface interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
@@ -24,10 +25,14 @@ type urlsRepository struct {
 	pool PoolInterface
 }
 
+// NewURLsRepository создает новый репозиторий для работы с URL в PostgreSQL базе данных.
+// Принимает пул соединений PostgreSQL и возвращает реализацию интерфейса URLRepository.
 func NewURLsRepository(pool *pgxpool.Pool) repository.URLRepository {
 	return &urlsRepository{pool: pool}
 }
 
+// Ping проверяет доступность базы данных PostgreSQL, выполняя простой запрос SELECT 1.
+// Возвращает ошибку, если соединение с базой данных недоступно.
 func (r *urlsRepository) Ping(ctx context.Context) error {
 	query := `SELECT 1`
 	_, err := r.pool.Exec(ctx, query)
@@ -37,6 +42,8 @@ func (r *urlsRepository) Ping(ctx context.Context) error {
 	return nil
 }
 
+// GetByLongURL получает URL из базы данных по длинному URL.
+// Возвращает модель URL или ошибку, если URL не найден или был удален.
 func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
@@ -61,6 +68,8 @@ func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*mod
 	return &urls, nil
 }
 
+// GetByShortURL получает URL из базы данных по короткому идентификатору.
+// Возвращает модель URL или ошибку, если URL не найден.
 func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
@@ -81,6 +90,8 @@ func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*m
 	return &urls, nil
 }
 
+// Create создает новую запись URL в базе данных.
+// Принимает модель URL и возвращает ошибку, если создание не удалось.
 func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error {
 	if url == nil {
 		return errors.New("url cannot be nil")
@@ -96,6 +107,8 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	return nil
 }
 
+// CreateBatch создает несколько записей URL в базе данных в одной транзакции.
+// Принимает список моделей URL и возвращает ошибку, если создание не удалось.
 func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
 	if len(urls) == 0 {
 		return nil
@@ -129,6 +142,8 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 	return tx.Commit(ctx)
 }
 
+// GetAll получает список URL из базы данных с пагинацией.
+// Принимает лимит и смещение для пагинации, возвращает список моделей URL или ошибку.
 func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
 	query := `
 		SELECT id, short_url, long_url, is_deleted, created_at, updated_at
@@ -168,6 +183,8 @@ func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*mode
 	return urls, nil
 }
 
+// GetTotalCount получает общее количество URL в базе данных.
+// Возвращает количество записей или ошибку, если запрос не удался.
 func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM urls WHERE is_deleted = false`
 

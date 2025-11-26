@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// NewURLsRepository создает новый репозиторий для работы с URL в зависимости от типа пула соединений.
+// Поддерживает PostgreSQL (pgxpool.Pool) и SQLite (*sql.DB). Возвращает соответствующую реализацию интерфейса URLRepository.
 func NewURLsRepository(pool any) repository.URLRepository {
 	switch currentPool := pool.(type) {
 	case *pgxpool.Pool:

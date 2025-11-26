@@ -11,6 +11,8 @@ import (
 	"yp-go-short-url-service/internal/service"
 )
 
+// NewURLShortenerService создает новый сервис для сокращения URL.
+// Принимает репозитории для работы с URL и шину событий для уведомлений, возвращает реализацию интерфейса URLShortenerService.
 func NewURLShortenerService(
 	urlRepository repository.URLRepository,
 	userURLsRepository repository.UserURLsRepository,
@@ -172,6 +174,9 @@ func (s *urlShortenerService) saveURLsToStorage(ctx context.Context, urlsForCrea
 	return nil
 }
 
+// ShortURL создает короткую ссылку из длинного URL.
+// Если URL уже существует, возвращает существующий короткий URL с ошибкой ErrURLAlreadyExists.
+// Возвращает короткий URL и ошибку, если создание не удалось.
 func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (string, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)

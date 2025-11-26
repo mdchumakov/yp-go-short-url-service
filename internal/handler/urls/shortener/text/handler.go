@@ -20,6 +20,8 @@ type CreatingShortLinks struct {
 	baseURL string
 }
 
+// NewCreatingShortLinksHandler создает новый обработчик для создания коротких ссылок в текстовом формате.
+// Принимает сервис сокращения URL и настройки приложения, возвращает обработчик, реализующий интерфейс Handler.
 func NewCreatingShortLinksHandler(
 	service service.URLShortenerService,
 	settings *config.Settings,

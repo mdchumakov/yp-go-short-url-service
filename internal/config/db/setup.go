@@ -9,12 +9,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// SetupParams содержит параметры для настройки подключения к базе данных.
+// Используется для выбора между PostgreSQL и SQLite.
 type SetupParams struct {
 	PostgresDSN      string
 	PGMigrationsPath string
 	SQLiteDSN        string
 }
 
+// Validate проверяет корректность параметров настройки базы данных.
+// Возвращает ошибку, если не указаны параметры подключения или путь к миграциям.
 func (s *SetupParams) Validate() error {
 	if s.SQLiteDSN == "" && s.PostgresDSN == "" {
 		return errors.New("db connection string is empty")
@@ -25,6 +29,9 @@ func (s *SetupParams) Validate() error {
 	return nil
 }
 
+// Setup настраивает подключение к базе данных.
+// Пытается подключиться к PostgreSQL, при неудаче переключается на SQLite.
+// Возвращает пул соединений PostgreSQL или соединение SQLite, либо ошибку.
 func Setup(
 	ctx context.Context,
 	logger *zap.SugaredLogger,

@@ -9,6 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// Middleware создает middleware для сжатия и распаковки HTTP-запросов и ответов в формате gzip.
+// Поддерживает сжатие для типов контента: application/json, text/html, application/x-gzip, text/plain.
+// Автоматически распаковывает входящие запросы с заголовком Content-Encoding: gzip.
+// Сжимает исходящие ответы, если клиент поддерживает gzip (заголовок Accept-Encoding: gzip).
 func Middleware(log *zap.SugaredLogger) gin.HandlerFunc {
 	// Поддержка gzip
 	return func(c *gin.Context) {

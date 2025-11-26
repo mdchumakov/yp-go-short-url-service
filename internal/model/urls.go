@@ -2,6 +2,8 @@ package model
 
 import "time"
 
+// URLsModel представляет модель URL в системе.
+// Содержит информацию о коротком и длинном URL, статусе удаления и временных метках.
 type URLsModel struct {
 	ID        uint      `json:"id" db:"id"`
 	ShortURL  string    `json:"short_url" db:"short_url"`
