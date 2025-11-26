@@ -15,7 +15,10 @@ type RequestIDKeyType struct{}
 // Используется для извлечения уникального идентификатора запроса из контекста.
 var RequestIDKey = RequestIDKeyType{}
 
+// RequestIDHeader - название HTTP заголовка для передачи уникального идентификатора запроса.
 const RequestIDHeader = "X-Request-ID"
+
+// GinRequestIDKey - ключ для хранения Request ID в контексте Gin.
 const GinRequestIDKey = "request_id"
 
 // RequestIDMiddleware добавляет уникальный ID к каждому запросу для трассировки.

@@ -16,14 +16,19 @@ import (
 // jwtContextKey - тип для ключа контекста JWT
 type jwtContextKey string
 
+// String возвращает строковое представление ключа контекста JWT.
+// Реализует интерфейс fmt.Stringer для удобного логирования.
 func (k jwtContextKey) String() string {
 	return string(k)
 }
 
 const (
-	JWTTokenContextKey  = jwtContextKey("jwt_user")
+	// JWTTokenContextKey - ключ для хранения пользователя из JWT токена в контексте запроса.
+	JWTTokenContextKey = jwtContextKey("jwt_user")
+	// AuthorizationHeader - название HTTP заголовка для передачи JWT токена.
 	AuthorizationHeader = "Authorization"
-	BearerPrefix        = "Bearer "
+	// BearerPrefix - префикс для JWT токена в заголовке Authorization (формат: "Bearer <token>").
+	BearerPrefix = "Bearer "
 )
 
 // JWTAuthMiddleware создает middleware для JWT аутентификации.

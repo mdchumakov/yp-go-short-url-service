@@ -197,6 +197,9 @@ func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
+// SoftDeleteByShortURLs помечает указанные URL как удаленные (soft delete) для конкретного пользователя в PostgreSQL.
+// Выполняет мягкое удаление только тех URL, которые принадлежат указанному пользователю.
+// Принимает список коротких URL и идентификатор пользователя, возвращает ошибку, если удаление не удалось.
 func (r *urlsRepository) SoftDeleteByShortURLs(ctx context.Context, shortURLs []string, userID string) error {
 	if len(shortURLs) == 0 {
 		return nil

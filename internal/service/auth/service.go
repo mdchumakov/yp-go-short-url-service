@@ -125,6 +125,9 @@ func (s *authService) GetUserByName(ctx context.Context, username string) (*mode
 	return user, nil
 }
 
+// GenerateExpirationTime генерирует время истечения для анонимного пользователя.
+// Время истечения рассчитывается как текущее время плюс длительность токена из настроек JWT.
+// Возвращает указатель на время истечения.
 func (s *authService) GenerateExpirationTime() *time.Time {
 	expiration := time.Now().Add(s.jwtSettings.TokenDuration)
 	return &expiration

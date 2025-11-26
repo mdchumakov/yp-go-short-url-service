@@ -31,6 +31,10 @@ type urlShortenerService struct {
 	eventBus           baseObserver.Subject[audit.Event]
 }
 
+// ShortURLsByBatch создает короткие ссылки для массива длинных URL в пакетном режиме.
+// Принимает массив словарей с ключами "correlation_id" и "original_url".
+// Возвращает тот же массив с добавленными ключами "short_url" для каждого элемента.
+// Если URL уже существует, использует существующий короткий URL.
 func (s *urlShortenerService) ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error) {
 	logger := middleware.GetLogger(ctx)
 

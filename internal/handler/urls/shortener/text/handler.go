@@ -15,6 +15,8 @@ import (
 
 const maxBodySize int64 = 1024 * 1024 // 1 MB
 
+// CreatingShortLinks представляет обработчик для создания коротких ссылок в текстовом формате.
+// Обрабатывает POST запросы с длинным URL в теле запроса и возвращает короткий URL.
 type CreatingShortLinks struct {
 	service service.URLShortenerService
 	baseURL string
