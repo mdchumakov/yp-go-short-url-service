@@ -22,6 +22,7 @@ func (k jwtContextKey) String() string {
 	return string(k)
 }
 
+// Константы для работы с JWT токенами и HTTP заголовками.
 const (
 	// JWTTokenContextKey - ключ для хранения пользователя из JWT токена в контексте запроса.
 	JWTTokenContextKey = jwtContextKey("jwt_user")

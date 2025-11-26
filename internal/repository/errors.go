@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+// Ошибки репозитория, используемые для обработки различных ситуаций при работе с базой данных.
 var (
 	// ErrURLNotFound возвращается, когда запрашиваемый URL не найден в базе данных.
 	ErrURLNotFound = errors.New("URL не найден")

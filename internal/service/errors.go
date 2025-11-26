@@ -2,6 +2,7 @@ package service
 
 import "errors"
 
+// Ошибки сервиса, используемые для обработки различных ситуаций при работе с URL.
 var (
 	// ErrURLWasDeleted возвращается, когда запрашиваемый URL был удален.
 	ErrURLWasDeleted = errors.New("url was deleted")
