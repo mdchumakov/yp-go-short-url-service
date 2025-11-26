@@ -1,4 +1,4 @@
-.PHONY: swagger build run test clean
+.PHONY: swagger build run test clean fmt fmt-check imports imports-check
 
 # Генерация Swagger документации
 swagger:
@@ -33,6 +33,54 @@ clean:
 deps:
 	go mod tidy
 	go mod download
+
+# Форматирование кода с помощью gofmt
+fmt:
+	@echo "Форматирование кода..."
+	gofmt -s -w .
+	@echo "Форматирование завершено!"
+
+# Проверка форматирования (без изменений файлов)
+fmt-check:
+	@echo "Проверка форматирования кода..."
+	@if [ -n "$$(gofmt -s -l .)" ]; then \
+		echo "Ошибка: код не отформатирован. Запустите 'make fmt' для исправления."; \
+		gofmt -s -d .; \
+		exit 1; \
+	else \
+		echo "Код отформатирован правильно!"; \
+	fi
+
+# Форматирование и сортировка импортов с помощью goimports
+imports:
+	@echo "Форматирование и сортировка импортов..."
+	@if [ -f "$(shell go env GOPATH)/bin/goimports" ]; then \
+		$(shell go env GOPATH)/bin/goimports -w .; \
+	else \
+		echo "goimports не найден. Устанавливаем..."; \
+		go install golang.org/x/tools/cmd/goimports@latest; \
+		$(shell go env GOPATH)/bin/goimports -w .; \
+	fi
+	@echo "Импорты отсортированы и код отформатирован!"
+
+# Проверка форматирования и импортов (без изменений файлов)
+imports-check:
+	@echo "Проверка форматирования и импортов..."
+	@if [ -f "$(shell go env GOPATH)/bin/goimports" ]; then \
+		GOIMPORTS="$(shell go env GOPATH)/bin/goimports"; \
+	else \
+		echo "goimports не найден. Устанавливаем..."; \
+		go install golang.org/x/tools/cmd/goimports@latest; \
+		GOIMPORTS="$(shell go env GOPATH)/bin/goimports"; \
+	fi; \
+	if [ -n "$$($$GOIMPORTS -l .)" ]; then \
+		echo "Ошибка: код не отформатирован или импорты не отсортированы."; \
+		echo "Запустите 'make imports' для исправления."; \
+		$$GOIMPORTS -d .; \
+		exit 1; \
+	else \
+		echo "Код отформатирован и импорты отсортированы правильно!"; \
+	fi
 
 # Миграции
 migrate-up:
@@ -97,4 +145,8 @@ help:
 	@echo "  migrate-force  - Принудительно установить версию (требует DATABASE_DSN и VERSION)"
 	@echo "  migrate-version - Показать текущую версию миграции (требует DATABASE_DSN)"
 	@echo "  migrate-create - Создать новую миграцию (требует NAME=migration_name)"
+	@echo "  fmt      - Форматировать код с помощью gofmt"
+	@echo "  fmt-check - Проверить форматирование кода (без изменений)"
+	@echo "  imports  - Форматировать код и сортировать импорты с помощью goimports"
+	@echo "  imports-check - Проверить форматирование и импорты (без изменений)"
 	@echo "  help     - Показать эту справку" 

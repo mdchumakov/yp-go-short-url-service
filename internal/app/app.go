@@ -29,12 +29,13 @@ import (
 
 	_ "yp-go-short-url-service/docs"
 
+	"net/http"
+	"net/http/pprof"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
-	"net/http"
-	"net/http/pprof"
 )
 
 type App struct {
