@@ -69,6 +69,20 @@ func (mr *MockObserverMockRecorder[Event]) Notify(ctx, event any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Notify", reflect.TypeOf((*MockObserver[Event])(nil).Notify), ctx, event)
 }
 
+// Stop mocks base method.
+func (m *MockObserver[Event]) Stop() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stop")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Stop indicates an expected call of Stop.
+func (mr *MockObserverMockRecorder[Event]) Stop() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockObserver[Event])(nil).Stop))
+}
+
 // MockSubject is a mock of Subject interface.
 type MockSubject[Event any] struct {
 	ctrl     *gomock.Controller
@@ -129,4 +143,16 @@ func (m *MockSubject[Event]) Unsubscribe(observer base.Observer[Event]) {
 func (mr *MockSubjectMockRecorder[Event]) Unsubscribe(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unsubscribe", reflect.TypeOf((*MockSubject[Event])(nil).Unsubscribe), observer)
+}
+
+// UnsubscribeAll mocks base method.
+func (m *MockSubject[Event]) UnsubscribeAll() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UnsubscribeAll")
+}
+
+// UnsubscribeAll indicates an expected call of UnsubscribeAll.
+func (mr *MockSubjectMockRecorder[Event]) UnsubscribeAll() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsubscribeAll", reflect.TypeOf((*MockSubject[Event])(nil).UnsubscribeAll))
 }

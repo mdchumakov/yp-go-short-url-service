@@ -12,8 +12,8 @@ import (
 	shortenBatchAPI "yp-go-short-url-service/internal/handler/urls/shortener/batch"
 	shortenAPI "yp-go-short-url-service/internal/handler/urls/shortener/json"
 	urlShortenerHandler "yp-go-short-url-service/internal/handler/urls/shortener/text"
-	"yp-go-short-url-service/internal/observer"
 	"yp-go-short-url-service/internal/observer/audit"
+	"yp-go-short-url-service/internal/observer/base"
 
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/middleware/gzip"
@@ -52,6 +52,7 @@ type App struct {
 	services                  Services
 	settings                  *config.Settings
 	logger                    *zap.SugaredLogger
+	dataBus                   DataBus
 }
 
 // Services содержит коллекцию сервисов приложения.
@@ -60,6 +61,10 @@ type Services struct {
 	auth          service.AuthService
 	jwt           service.JWTService
 	urlDestructor service.URLDestructorService
+}
+
+type DataBus struct {
+	auditEventBus base.Subject[audit.Event]
 }
 
 // NewApp создает новый экземпляр приложения с инициализированными зависимостями.
@@ -88,10 +93,7 @@ func NewApp(logger *zap.SugaredLogger) *App {
 	AuthService := authService.NewAuthService(userRepo, jwtSettings)
 	JWTService := jwtService.NewJWTService(jwtSettings)
 
-	auditEventBus := observer.NewEventBus[audit.Event]()
-
-	auditLogObserver := audit.NewLogObserver(logger, settings)
-	auditEventBus.Subscribe(auditLogObserver)
+	auditEventBus := audit.NewEventBus(settings.GetAuditFilePath(), settings.GetAuditURL(), logger)
 
 	pingService := healthService.NewHealthCheckService(repoURLs)
 	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs, userURLsRepo, auditEventBus)
@@ -122,6 +124,9 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		},
 		settings: settings,
 		logger:   logger,
+		dataBus: DataBus{
+			auditEventBus: auditEventBus,
+		},
 	}
 }
 
@@ -194,5 +199,8 @@ func (a *App) Stop() {
 	if a.services.urlDestructor != nil {
 		a.services.urlDestructor.Stop()
 	}
+
+	a.dataBus.auditEventBus.UnsubscribeAll()
+
 	a.logger.Info("Application stopped")
 }

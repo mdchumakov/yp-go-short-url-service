@@ -1,29 +1,29 @@
-package observer
+package base
 
 import (
 	"context"
+	"fmt"
 	"sync"
-	"yp-go-short-url-service/internal/observer/base"
 )
 
 // EventBus реализует паттерн Observer для асинхронной обработки событий.
 // Позволяет подписывать наблюдателей и уведомлять их о событиях параллельно.
 type EventBus[Event any] struct {
-	observers map[string]base.Observer[Event]
+	observers map[string]Observer[Event]
 	mutex     sync.RWMutex
 }
 
 // NewEventBus создает новый шину событий для обработки событий через паттерн Observer.
 // Возвращает реализацию интерфейса Subject с поддержкой параллельного уведомления наблюдателей.
-func NewEventBus[Event any]() base.Subject[Event] {
+func NewEventBus[Event any]() Subject[Event] {
 	return &EventBus[Event]{
-		observers: make(map[string]base.Observer[Event]),
+		observers: make(map[string]Observer[Event]),
 	}
 }
 
 // Subscribe подписывает наблюдателя на получение событий.
 // Если наблюдатель с таким ID уже подписан, он будет заменен новым.
-func (eb *EventBus[Event]) Subscribe(observer base.Observer[Event]) {
+func (eb *EventBus[Event]) Subscribe(observer Observer[Event]) {
 	eb.mutex.Lock()
 	defer eb.mutex.Unlock()
 	eb.observers[observer.GetID()] = observer
@@ -31,9 +31,12 @@ func (eb *EventBus[Event]) Subscribe(observer base.Observer[Event]) {
 
 // Unsubscribe отписывает наблюдателя от получения событий.
 // Удаляет наблюдателя из списка подписчиков по его ID.
-func (eb *EventBus[Event]) Unsubscribe(observer base.Observer[Event]) {
+func (eb *EventBus[Event]) Unsubscribe(observer Observer[Event]) {
 	eb.mutex.Lock()
 	defer eb.mutex.Unlock()
+	if err := observer.Stop(); err != nil {
+		fmt.Printf("EventBus[Event] Unsubscribe observer '%s' error: %s\n", observer.GetID(), err)
+	}
 	delete(eb.observers, observer.GetID())
 }
 
@@ -41,7 +44,7 @@ func (eb *EventBus[Event]) Unsubscribe(observer base.Observer[Event]) {
 // Использует горутины для параллельной обработки и возвращает первую ошибку, если она возникла.
 func (eb *EventBus[Event]) NotifyAll(ctx context.Context, event Event) error {
 	eb.mutex.RLock()
-	observers := make([]base.Observer[Event], 0, len(eb.observers))
+	observers := make([]Observer[Event], 0, len(eb.observers))
 	for _, obs := range eb.observers {
 		observers = append(observers, obs)
 	}
@@ -56,7 +59,7 @@ func (eb *EventBus[Event]) NotifyAll(ctx context.Context, event Event) error {
 
 	for _, observer := range observers {
 		wg.Add(1)
-		go func(obs base.Observer[Event]) {
+		go func(obs Observer[Event]) {
 			defer wg.Done()
 			// Проверяем, не отменен ли контекст перед вызовом
 			select {
@@ -83,4 +86,12 @@ func (eb *EventBus[Event]) NotifyAll(ctx context.Context, event Event) error {
 		}
 	}
 	return nil
+}
+
+// UnsubscribeAll отписывает всех наблюдателей от получения событий.
+// Также используется для graceful shutdown, чтобы освободить ресурсы всех наблюдателей.
+func (eb *EventBus[Event]) UnsubscribeAll() {
+	for _, observer := range eb.observers {
+		eb.Unsubscribe(observer)
+	}
 }
