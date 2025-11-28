@@ -63,6 +63,7 @@ type Services struct {
 	urlDestructor service.URLDestructorService
 }
 
+// DataBus содержит все шины событий для передачи данных между компонентами приложения.
 type DataBus struct {
 	auditEventBus base.Subject[audit.Event]
 }

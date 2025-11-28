@@ -75,6 +75,7 @@ func (o *RemoteObserver) Notify(_ context.Context, event Event) error {
 	return nil
 }
 
+// Stop выполняет остановку наблюдателя.
 func (o *RemoteObserver) Stop() error {
 	o.logger.Infof("RemoteObserver '%s' stopped", o.id)
 	return nil
