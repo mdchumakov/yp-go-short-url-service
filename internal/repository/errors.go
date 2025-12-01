@@ -7,9 +7,13 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+// Ошибки репозитория, используемые для обработки различных ситуаций при работе с базой данных.
 var (
-	ErrURLNotFound  = errors.New("URL не найден")
-	ErrURLExists    = errors.New("URL уже существует")
+	// ErrURLNotFound возвращается, когда запрашиваемый URL не найден в базе данных.
+	ErrURLNotFound = errors.New("URL не найден")
+	// ErrURLExists возвращается, когда пытаются создать URL, который уже существует в базе данных.
+	ErrURLExists = errors.New("URL уже существует")
+	// ErrUserNotFound возвращается, когда запрашиваемый пользователь не найден в базе данных.
 	ErrUserNotFound = errors.New("пользователь не найден")
 )
 

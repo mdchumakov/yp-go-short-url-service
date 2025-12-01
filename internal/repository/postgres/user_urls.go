@@ -15,10 +15,14 @@ type userURLsRepository struct {
 	pool PoolInterface
 }
 
+// NewUserURLsRepository создает новый репозиторий для работы с URL пользователей в PostgreSQL базе данных.
+// Принимает пул соединений PostgreSQL и возвращает реализацию интерфейса UserURLsRepository.
 func NewUserURLsRepository(pool *pgxpool.Pool) repository.UserURLsRepository {
 	return &userURLsRepository{pool: pool}
 }
 
+// GetByUserID получает все URL, принадлежащие указанному пользователю, из базы данных.
+// Возвращает список моделей URL, отсортированных по дате создания (от новых к старым), или ошибку.
 func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]*model.URLsModel, error) {
 	query := `
 		SELECT u.id, u.short_url, u.long_url, u.is_deleted, u.created_at, u.updated_at
@@ -58,6 +62,8 @@ func (r *userURLsRepository) GetByUserID(ctx context.Context, userID string) ([]
 	return urls, nil
 }
 
+// CreateURLWithUser создает новую запись URL и связывает ее с пользователем в базе данных.
+// Принимает модель URL и идентификатор пользователя, возвращает ошибку, если создание не удалось.
 func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.URLsModel, userID string) error {
 	if userID == "" {
 		return errors.New("userID cannot be empty")
@@ -116,6 +122,8 @@ func (r *userURLsRepository) CreateURLWithUser(ctx context.Context, url *model.U
 	return nil
 }
 
+// CreateMultipleURLsWithUser создает несколько записей URL и связывает их с пользователем в одной транзакции.
+// Принимает список моделей URL и идентификатор пользователя, возвращает ошибку, если создание не удалось.
 func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, urls []*model.URLsModel, userID string) error {
 	if userID == "" {
 		return errors.New("userID cannot be empty")
@@ -176,6 +184,8 @@ func (r *userURLsRepository) CreateMultipleURLsWithUser(ctx context.Context, url
 	return tx.Commit(ctx)
 }
 
+// DeleteURLsWithUser помечает указанные URL как удаленные для конкретного пользователя.
+// Принимает список коротких URL и идентификатор пользователя, возвращает ошибку, если удаление не удалось.
 func (r *userURLsRepository) DeleteURLsWithUser(ctx context.Context, shortURLs []string, userID string) error {
 	if userID == "" {
 		return errors.New("userID cannot be empty")

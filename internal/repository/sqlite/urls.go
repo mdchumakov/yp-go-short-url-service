@@ -10,7 +10,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// DBInterface определяет интерфейс для работы с базой данных
+// DBInterface определяет интерфейс для работы с базой данных SQLite.
+// Используется для абстракции работы с базой данных и упрощения тестирования.
 type DBInterface interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
@@ -23,14 +24,20 @@ type urlsRepository struct {
 	db DBInterface
 }
 
+// NewURLsRepository создает новый репозиторий для работы с URL в SQLite базе данных.
+// Принимает соединение с SQLite и возвращает реализацию интерфейса URLRepository.
 func NewURLsRepository(db *sql.DB) repository.URLRepository {
 	return &urlsRepository{db: db}
 }
 
+// Ping проверяет доступность базы данных SQLite.
+// Возвращает ошибку, если соединение с базой данных недоступно.
 func (r *urlsRepository) Ping(ctx context.Context) error {
 	return r.db.PingContext(ctx)
 }
 
+// GetByLongURL получает URL из базы данных SQLite по длинному URL.
+// Возвращает модель URL или ошибку, если URL не найден.
 func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
@@ -53,6 +60,8 @@ func (r *urlsRepository) GetByLongURL(ctx context.Context, longURL string) (*mod
 	return &urls, nil
 }
 
+// GetByShortURL получает URL из базы данных SQLite по короткому идентификатору.
+// Возвращает модель URL или ошибку, если URL не найден.
 func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*model.URLsModel, error) {
 	var urls model.URLsModel
 
@@ -75,6 +84,8 @@ func (r *urlsRepository) GetByShortURL(ctx context.Context, shortURL string) (*m
 	return &urls, nil
 }
 
+// Create создает новую запись URL в базе данных SQLite.
+// Принимает модель URL и возвращает ошибку, если создание не удалось.
 func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error {
 	if url == nil {
 		return errors.New("url cannot be nil")
@@ -90,6 +101,8 @@ func (r *urlsRepository) Create(ctx context.Context, url *model.URLsModel) error
 	return nil
 }
 
+// CreateBatch создает несколько записей URL в базе данных SQLite в одной транзакции.
+// Принимает список моделей URL и возвращает ошибку, если создание не удалось.
 func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsModel) error {
 	if len(urls) == 0 {
 		return nil
@@ -139,6 +152,8 @@ func (r *urlsRepository) CreateBatch(ctx context.Context, urls []*model.URLsMode
 	return tx.Commit()
 }
 
+// GetAll получает список URL из базы данных SQLite с пагинацией.
+// Принимает лимит и смещение для пагинации, возвращает список моделей URL или ошибку.
 func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*model.URLsModel, error) {
 	query := `SELECT id, short_url, long_url, created_at, updated_at FROM urls ORDER BY created_at DESC LIMIT ? OFFSET ?`
 
@@ -176,6 +191,8 @@ func (r *urlsRepository) GetAll(ctx context.Context, limit, offset int) ([]*mode
 	return urls, nil
 }
 
+// GetTotalCount получает общее количество URL в базе данных SQLite.
+// Возвращает количество записей или ошибку, если запрос не удался.
 func (r *urlsRepository) GetTotalCount(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM urls`
 

@@ -5,25 +5,36 @@ import (
 	"time"
 	"yp-go-short-url-service/internal/middleware"
 	"yp-go-short-url-service/internal/model"
+	"yp-go-short-url-service/internal/observer/audit"
+	baseObserver "yp-go-short-url-service/internal/observer/base"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/service"
 )
 
+// NewURLShortenerService создает новый сервис для сокращения URL.
+// Принимает репозитории для работы с URL и шину событий для уведомлений, возвращает реализацию интерфейса URLShortenerService.
 func NewURLShortenerService(
 	urlRepository repository.URLRepository,
 	userURLsRepository repository.UserURLsRepository,
+	eventBus baseObserver.Subject[audit.Event],
 ) service.URLShortenerService {
 	return &urlShortenerService{
 		urlRepository:      urlRepository,
 		userURLsRepository: userURLsRepository,
+		eventBus:           eventBus,
 	}
 }
 
 type urlShortenerService struct {
 	urlRepository      repository.URLRepository
 	userURLsRepository repository.UserURLsRepository
+	eventBus           baseObserver.Subject[audit.Event]
 }
 
+// ShortURLsByBatch создает короткие ссылки для массива длинных URL в пакетном режиме.
+// Принимает массив словарей с ключами "correlation_id" и "original_url".
+// Возвращает тот же массив с добавленными ключами "short_url" для каждого элемента.
+// Если URL уже существует, использует существующий короткий URL.
 func (s *urlShortenerService) ShortURLsByBatch(ctx context.Context, longURLs []map[string]string) ([]map[string]string, error) {
 	logger := middleware.GetLogger(ctx)
 
@@ -167,6 +178,9 @@ func (s *urlShortenerService) saveURLsToStorage(ctx context.Context, urlsForCrea
 	return nil
 }
 
+// ShortURL создает короткую ссылку из длинного URL.
+// Если URL уже существует, возвращает существующий короткий URL с ошибкой ErrURLAlreadyExists.
+// Возвращает короткий URL и ошибку, если создание не удалось.
 func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (string, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
@@ -192,6 +206,8 @@ func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (str
 			"long_url", longURL,
 			"request_id", requestID,
 		)
+		s.sendNotificationEvent(ctx, longURL)
+
 		return *shortURLFromStorage, service.ErrURLAlreadyExists
 	}
 
@@ -221,6 +237,7 @@ func (s *urlShortenerService) ShortURL(ctx context.Context, longURL string) (str
 		)
 		return "", err
 	}
+	s.sendNotificationEvent(ctx, longURL)
 
 	logger.Infow("Short URL successfully saved to storage",
 		"short_url", newURL.ShortURL,
@@ -294,4 +311,34 @@ func (s *urlShortenerService) saveShortURLToStorage(ctx context.Context, url *mo
 			"request_id", requestID)
 	}
 	return nil
+}
+
+func (s *urlShortenerService) sendNotificationEvent(ctx context.Context, url string) {
+	if s.eventBus == nil {
+		return
+	}
+
+	var userID string
+
+	logger := middleware.GetLogger(ctx)
+
+	user := middleware.GetJWTUserFromContext(ctx)
+	if user == nil {
+		userID = "anonymous"
+	} else {
+		userID = user.ID
+	}
+
+	event := audit.Event{
+		UserID:    userID,
+		Action:    audit.EventShortened,
+		Timestamp: int(time.Now().Unix()),
+		URL:       url,
+	}
+
+	go func() {
+		if err := s.eventBus.NotifyAll(ctx, event); err != nil {
+			logger.Errorw("Failed to send short URL notification event err=", err)
+		}
+	}()
 }

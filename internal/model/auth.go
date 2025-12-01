@@ -2,6 +2,8 @@ package model
 
 import "time"
 
+// UserModel представляет модель пользователя в системе.
+// Содержит информацию об идентификаторе, имени, пароле, статусе анонимности и временных метках.
 type UserModel struct {
 	ID          string    `json:"id" db:"id"`
 	Name        string    `json:"name" db:"name"`

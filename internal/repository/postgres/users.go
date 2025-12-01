@@ -17,11 +17,14 @@ type usersRepository struct {
 	pool *pgxpool.Pool
 }
 
+// NewUsersRepository создает новый репозиторий для работы с пользователями в PostgreSQL базе данных.
+// Принимает пул соединений PostgreSQL и возвращает реализацию интерфейса UserRepository.
 func NewUsersRepository(pool *pgxpool.Pool) repository.UserRepository {
 	return &usersRepository{pool: pool}
 }
 
-// CreateUser создает нового пользователя
+// CreateUser создает нового пользователя в базе данных PostgreSQL.
+// Принимает имя пользователя, пароль и время истечения, возвращает модель пользователя или ошибку.
 func (r *usersRepository) CreateUser(ctx context.Context, username, password string, expiresAt *time.Time) (*model.UserModel, error) {
 	if username == "" {
 		return nil, errors.New("username cannot be empty")
@@ -52,7 +55,8 @@ func (r *usersRepository) CreateUser(ctx context.Context, username, password str
 	return &user, nil
 }
 
-// CreateAnonymousUser создает анонимного пользователя с уникальным именем
+// CreateAnonymousUser создает анонимного пользователя с уникальным именем в базе данных PostgreSQL.
+// Генерирует уникальное имя на основе UUID и возвращает модель созданного пользователя или ошибку.
 func (r *usersRepository) CreateAnonymousUser(ctx context.Context) (*model.UserModel, error) {
 	// Генерируем уникальное имя для анонимного пользователя
 	anonymousName := fmt.Sprintf("anonymous_%s", uuid.New().String())
@@ -79,7 +83,8 @@ func (r *usersRepository) CreateAnonymousUser(ctx context.Context) (*model.UserM
 	return &user, nil
 }
 
-// GetUserByID получает пользователя по ID
+// GetUserByID получает пользователя из базы данных PostgreSQL по его уникальному идентификатору.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (r *usersRepository) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
 	query := `SELECT id, name, password, is_anonymous, created_at, updated_at FROM users WHERE id = $1`
 
@@ -102,7 +107,8 @@ func (r *usersRepository) GetUserByID(ctx context.Context, userID string) (*mode
 	return &user, nil
 }
 
-// GetUserByName получает пользователя по имени
+// GetUserByName получает пользователя из базы данных PostgreSQL по его имени.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (r *usersRepository) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
 	query := `SELECT * FROM users WHERE name = $1`
 

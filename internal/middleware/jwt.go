@@ -16,17 +16,26 @@ import (
 // jwtContextKey - тип для ключа контекста JWT
 type jwtContextKey string
 
+// String возвращает строковое представление ключа контекста JWT.
+// Реализует интерфейс fmt.Stringer для удобного логирования.
 func (k jwtContextKey) String() string {
 	return string(k)
 }
 
+// Константы для работы с JWT токенами и HTTP заголовками.
 const (
-	JWTTokenContextKey  = jwtContextKey("jwt_user")
+	// JWTTokenContextKey - ключ для хранения пользователя из JWT токена в контексте запроса.
+	JWTTokenContextKey = jwtContextKey("jwt_user")
+	// AuthorizationHeader - название HTTP заголовка для передачи JWT токена.
 	AuthorizationHeader = "Authorization"
-	BearerPrefix        = "Bearer "
+	// BearerPrefix - префикс для JWT токена в заголовке Authorization (формат: "Bearer <token>").
+	BearerPrefix = "Bearer "
 )
 
-// JWTAuthMiddleware создает middleware для JWT аутентификации
+// JWTAuthMiddleware создает middleware для JWT аутентификации.
+// Проверяет JWT токен из cookie или заголовка Authorization, валидирует его и добавляет пользователя в контекст.
+// Если токен отсутствует и разрешены анонимные пользователи, создает анонимного пользователя и генерирует токен.
+// Параметр isAnonAllowed определяет, разрешены ли анонимные пользователи для данного маршрута.
 func JWTAuthMiddleware(
 	jwtService service.JWTService,
 	authService service.AuthService,
@@ -162,7 +171,8 @@ func setJWTCookie(c *gin.Context, token string, jwtSettings *config.JWTSettings,
 	}
 }
 
-// SetJWTCookie устанавливает JWT токен в куки (публичная функция для использования в хендлерах)
+// SetJWTCookie устанавливает JWT токен в куки (публичная функция для использования в хендлерах).
+// Принимает контекст Gin, токен, настройки JWT и время истечения токена.
 func SetJWTCookie(c *gin.Context, token string, jwtSettings *config.JWTSettings, expiration time.Duration) {
 	// Определяем домен для куки
 	domain := jwtSettings.CookieDomain
@@ -185,7 +195,8 @@ func SetJWTCookie(c *gin.Context, token string, jwtSettings *config.JWTSettings,
 	)
 }
 
-// ClearJWTCookie удаляет JWT куки
+// ClearJWTCookie удаляет JWT куки, устанавливая отрицательное время жизни.
+// Используется для выхода пользователя из системы.
 func ClearJWTCookie(c *gin.Context, jwtSettings *config.JWTSettings) {
 	// Определяем домен для куки
 	domain := jwtSettings.CookieDomain
@@ -220,7 +231,8 @@ func extractTokenFromCookie(c *gin.Context, cookieName string) string {
 	return token
 }
 
-// extractTokenFromHeader извлекает JWT токен из заголовка Authorization
+// extractTokenFromHeader извлекает JWT токен из заголовка Authorization.
+// Ожидает формат "Bearer <token>", возвращает пустую строку, если токен не найден или формат неверный.
 func extractTokenFromHeader(c *gin.Context) string {
 	authHeader := c.GetHeader(AuthorizationHeader)
 	if authHeader == "" {
@@ -245,7 +257,8 @@ func setTokenInHeader(c *gin.Context, token string) {
 	c.Header(AuthorizationHeader, BearerPrefix+token)
 }
 
-// GetJWTUserFromContext получает пользователя из JWT контекста
+// GetJWTUserFromContext получает пользователя из JWT контекста.
+// Возвращает модель пользователя, если она была добавлена в контекст middleware, иначе возвращает nil.
 func GetJWTUserFromContext(ctx context.Context) *model.UserModel {
 	if user, ok := ctx.Value(JWTTokenContextKey).(*model.UserModel); ok {
 		return user

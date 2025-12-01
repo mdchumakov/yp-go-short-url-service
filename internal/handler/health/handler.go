@@ -13,6 +13,8 @@ type pingHandler struct {
 	service service.HealthCheckService
 }
 
+// NewPingHandler создает новый обработчик для проверки здоровья сервиса.
+// Принимает сервис проверки здоровья и возвращает обработчик, реализующий интерфейс Handler.
 func NewPingHandler(service service.HealthCheckService) handler.Handler {
 	return &pingHandler{
 		service: service,

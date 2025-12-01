@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// NewCreatingShortURLsByBatchAPIHandler создает новый обработчик для пакетного создания коротких ссылок через API.
+// Принимает сервис сокращения URL и настройки приложения, возвращает обработчик, реализующий интерфейс Handler.
 func NewCreatingShortURLsByBatchAPIHandler(
 	service service.URLShortenerService,
 	settings *config.Settings,

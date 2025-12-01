@@ -15,6 +15,8 @@ import (
 
 const maxUsernameLength = 256
 
+// NewAuthService создает новый сервис аутентификации.
+// Принимает репозиторий пользователей и настройки JWT, возвращает реализацию интерфейса AuthService.
 func NewAuthService(userRepo repository.UserRepository, jwtSettings *config.JWTSettings) service.AuthService {
 	return &authService{
 		userRepo:    userRepo,
@@ -27,6 +29,8 @@ type authService struct {
 	jwtSettings *config.JWTSettings
 }
 
+// CreateAnonymousUser создает нового анонимного пользователя на основе IP-адреса и User-Agent.
+// Генерирует уникальное имя пользователя и создает запись в базе данных с указанным временем истечения.
 func (s *authService) CreateAnonymousUser(
 	ctx context.Context,
 	clientIP,
@@ -45,6 +49,8 @@ func (s *authService) CreateAnonymousUser(
 	return user, nil
 }
 
+// GetOrCreateAnonymousUser получает существующего анонимного пользователя или создает нового.
+// Использует IP-адрес и User-Agent для генерации уникального имени и поиска существующего пользователя.
 func (s *authService) GetOrCreateAnonymousUser(ctx context.Context, clientIP, userAgent string) (*model.UserModel, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
@@ -68,6 +74,8 @@ func (s *authService) GetOrCreateAnonymousUser(ctx context.Context, clientIP, us
 	return user, nil
 }
 
+// GenerateAnonymousName генерирует уникальное имя для анонимного пользователя.
+// Использует SHA256 хеш от комбинации IP-адреса и User-Agent с префиксом "anon_".
 func (s *authService) GenerateAnonymousName(clientIP, userAgent string) string {
 	// Создаем хеш из IP и User-Agent
 	hash := sha256.Sum256([]byte(clientIP + userAgent))
@@ -81,12 +89,14 @@ func (s *authService) GenerateAnonymousName(clientIP, userAgent string) string {
 	return anonName
 }
 
-// CreateUser создает нового пользователя
+// CreateUser создает нового пользователя с указанным именем и паролем.
+// В текущей реализации не реализован и вызывает panic.
 func (s *authService) CreateUser(ctx context.Context, username, password string) (*model.UserModel, error) {
 	panic("implement me")
 }
 
-// GetUserByID получает пользователя по ID
+// GetUserByID получает пользователя из базы данных по его уникальному идентификатору.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (s *authService) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
@@ -100,7 +110,8 @@ func (s *authService) GetUserByID(ctx context.Context, userID string) (*model.Us
 	return user, nil
 }
 
-// GetUserByName получает пользователя по имени
+// GetUserByName получает пользователя из базы данных по его имени.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (s *authService) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
 	logger := middleware.GetLogger(ctx)
 	requestID := middleware.ExtractRequestID(ctx)
@@ -114,6 +125,9 @@ func (s *authService) GetUserByName(ctx context.Context, username string) (*mode
 	return user, nil
 }
 
+// GenerateExpirationTime генерирует время истечения для анонимного пользователя.
+// Время истечения рассчитывается как текущее время плюс длительность токена из настроек JWT.
+// Возвращает указатель на время истечения.
 func (s *authService) GenerateExpirationTime() *time.Time {
 	expiration := time.Now().Add(s.jwtSettings.TokenDuration)
 	return &expiration

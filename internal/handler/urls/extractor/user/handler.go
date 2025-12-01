@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// NewExtractingUserURLsHandler создает новый обработчик для получения всех URL пользователя через API.
+// Принимает сервис извлечения URL и настройки приложения, возвращает обработчик, реализующий интерфейс Handler.
 func NewExtractingUserURLsHandler(service service.URLExtractorService, settings *config.Settings) handler.Handler {
 	return &extractingUserURLsHandler{
 		service: service,

@@ -13,6 +13,8 @@ type extractingLongURLHandler struct {
 	service service.URLExtractorService
 }
 
+// NewExtractingFullLinkHandler создает новый обработчик для извлечения длинного URL и перенаправления.
+// Принимает сервис извлечения URL и возвращает обработчик, реализующий интерфейс Handler.
 func NewExtractingFullLinkHandler(service service.URLExtractorService) handler.Handler {
 	return &extractingLongURLHandler{
 		service: service,

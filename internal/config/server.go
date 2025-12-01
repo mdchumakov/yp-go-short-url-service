@@ -6,6 +6,8 @@ const (
 	defaultBaseURL    = "http://localhost:8080/"
 )
 
+// ServerSettings содержит настройки HTTP-сервера.
+// Включает адрес, хост, порт, домен, базовый URL и окружение приложения.
 type ServerSettings struct {
 	ServerAddress string `envconfig:"SERVER_ADDRESS" default:"" required:"false"`
 	ServerHost    string `envconfig:"SERVER_HOST" default:"" required:"false"`

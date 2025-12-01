@@ -16,11 +16,14 @@ type usersRepository struct {
 	db *sql.DB
 }
 
+// NewUsersRepository создает новый репозиторий для работы с пользователями в SQLite базе данных.
+// Принимает соединение с SQLite и возвращает реализацию интерфейса UserRepository.
 func NewUsersRepository(db *sql.DB) repository.UserRepository {
 	return &usersRepository{db: db}
 }
 
-// CreateUser создает нового пользователя
+// CreateUser создает нового пользователя в базе данных SQLite.
+// Принимает имя пользователя, пароль и время истечения, возвращает модель пользователя или ошибку.
 func (r *usersRepository) CreateUser(
 	ctx context.Context,
 	username, password string,
@@ -56,7 +59,8 @@ func (r *usersRepository) CreateUser(
 	return &user, nil
 }
 
-// GetUserByID получает пользователя по ID
+// GetUserByID получает пользователя из базы данных SQLite по его уникальному идентификатору.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (r *usersRepository) GetUserByID(ctx context.Context, userID string) (*model.UserModel, error) {
 	query := `SELECT id, name, password, is_anonymous, expires_at, created_at, updated_at FROM users WHERE id = ?`
 
@@ -80,7 +84,8 @@ func (r *usersRepository) GetUserByID(ctx context.Context, userID string) (*mode
 	return &user, nil
 }
 
-// GetUserByName получает пользователя по имени
+// GetUserByName получает пользователя из базы данных SQLite по его имени.
+// Возвращает модель пользователя или ошибку, если пользователь не найден.
 func (r *usersRepository) GetUserByName(ctx context.Context, username string) (*model.UserModel, error) {
 	query := `SELECT id, name, password, is_anonymous, expires_at, created_at, updated_at FROM users WHERE name = ?`
 

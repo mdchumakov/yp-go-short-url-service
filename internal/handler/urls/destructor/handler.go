@@ -11,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// NewUsersURLsDestructorAPIHandler создает новый обработчик для удаления URL пользователя через API.
+// Принимает сервис удаления URL и возвращает обработчик, реализующий интерфейс Handler.
 func NewUsersURLsDestructorAPIHandler(service service.URLDestructorService) handler.Handler {
 	return &usersURLsDestructorAPIHandler{
 		service: service,
