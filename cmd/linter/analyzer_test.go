@@ -12,4 +12,5 @@ func TestAnalyzerPanic(t *testing.T) {
 
 func TestAnalyzerCall(t *testing.T) {
 	analysistest.Run(t, analysistest.TestData(), Analyzer, "./call_check")
+	analysistest.Run(t, analysistest.TestData(), Analyzer, "./call_check/main")
 }
