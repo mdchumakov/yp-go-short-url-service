@@ -95,6 +95,7 @@ func errOsExitWithCode() {
 	os.Exit(0) // want "использование os.Exit запрещено вне функции main пакета main"
 }
 
+// MyStruct тестовая структура для методов
 type MyStruct struct{}
 
 func (m MyStruct) errLogFatalInMethod() {

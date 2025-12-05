@@ -6,6 +6,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// Analyzer анализатор для линтинга кода
 var Analyzer = &analysis.Analyzer{
 	Name: "shortener_lint",
 	Doc:  "Линтер проверяющий использования функции в panic, log.Fatal, os.Exit",

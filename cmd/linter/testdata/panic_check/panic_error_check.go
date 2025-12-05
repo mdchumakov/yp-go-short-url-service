@@ -50,6 +50,7 @@ func errCheckWithNil() {
 	panic(nil) // want "использование функции panic запрещено"
 }
 
+// MyStruct Тестовая структура
 type MyStruct struct{}
 
 func (m MyStruct) errCheckInMethod() {
