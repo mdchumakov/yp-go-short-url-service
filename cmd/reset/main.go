@@ -36,7 +36,9 @@ func main() {
 				Structs:     structs,
 			}
 			fmt.Println(structs)
-			generateResetMethods(&enum, pkg.Dir)
+			if err := generateResetMethods(&enum, pkg.Dir); err != nil {
+				panic(err)
+			}
 		}
 
 	}
@@ -116,19 +118,21 @@ func processFile(fset *token.FileSet, typesInfo *types.Info, file *ast.File, str
 
 }
 
-func generateResetMethods(enum *tmpEnum, pkgPath string) {
+func generateResetMethods(enum *tmpEnum, pkgPath string) error {
 	var buf bytes.Buffer
 
 	tmp := template.Must(template.New("reset").Parse(tmpResetMethod))
 
 	err := tmp.Execute(&buf, enum)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	filePath := filepath.Join(pkgPath, genFileName)
 	err = os.WriteFile(filePath, buf.Bytes(), 0644)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }

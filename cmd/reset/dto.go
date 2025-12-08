@@ -59,7 +59,7 @@ func (f tmpStructFiled) IsBasic() bool {
 // HasResetMethod метод для проверки наличия метода Reset()
 func (f tmpStructFiled) HasResetMethod() bool {
 	// Получаем тип, на который нужно проверить метод
-	var checkType types.Type = f.Type
+	var checkType = f.Type
 
 	// Если это указатель, проверяем тип элемента
 	if pointer, ok := f.Type.(*types.Pointer); ok {
