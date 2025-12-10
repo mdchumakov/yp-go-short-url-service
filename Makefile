@@ -16,6 +16,19 @@ swagger:
 build: swagger
 	go build ./cmd/shortener
 
+
+# Сборка с линковщиком
+build-linked: swagger
+	@VERSION=$${VERSION:-dev}; \
+	BUILD_DATE=$${BUILD_DATE:-$$(date -u +"%Y-%m-%dT%H:%M:%SZ")}; \
+	BUILD_COMMIT=$${BUILD_COMMIT:-$$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")}; \
+	go build -ldflags "-X main.buildVersion=$$VERSION -X main.buildDate=$$BUILD_DATE -X main.buildCommit=$$BUILD_COMMIT" ./cmd/shortener
+
+
+# Запуск с линковщиком
+run-linked: build-linked
+	./shortener
+
 # Запуск проекта
 run: build
 	./shortener

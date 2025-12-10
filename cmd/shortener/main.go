@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"yp-go-short-url-service/internal/app"
 	"yp-go-short-url-service/internal/config"
 )
+
+var buildVersion, buildDate, buildCommit string
 
 // @title           URL Shortener Service API
 // @version         1.0
@@ -23,6 +26,8 @@ import (
 // @host      localhost:8080
 // @BasePath  /
 func main() {
+	printMetaInfo()
+
 	logger, err := config.NewLogger(false)
 	if err != nil {
 		logger.Fatal(err)
@@ -51,4 +56,24 @@ func main() {
 
 	// Корректно останавливаем приложение
 	service.Stop()
+}
+
+func printMetaInfo() {
+	var defaultInfo = "N/A"
+
+	if buildVersion == "" {
+		buildVersion = defaultInfo
+	}
+
+	if buildDate == "" {
+		buildDate = defaultInfo
+	}
+
+	if buildCommit == "" {
+		buildCommit = defaultInfo
+	}
+
+	fmt.Println("Build version: ", buildVersion)
+	fmt.Println("Build date: ", buildDate)
+	fmt.Println("Build commit: ", buildCommit)
 }
