@@ -58,19 +58,26 @@ func isInsideMainFunction(pass *analysis.Pass, node ast.Node) bool {
 	// Ищем функцию main в файлах пакета
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
-			if funcDecl, ok := n.(*ast.FuncDecl); ok {
-				// Проверяем, что это функция main
-				if funcDecl.Name != nil && funcDecl.Name.Name == "main" {
-					// Проверяем, что узел находится внутри тела функции main
-					if funcDecl.Body != nil {
-						bodyStart := funcDecl.Body.Pos()
-						bodyEnd := funcDecl.Body.End()
-						if nodePos >= bodyStart && nodePos <= bodyEnd {
-							found = true
-							return false // останавливаем обход, так как нашли
-						}
-					}
-				}
+			funcDecl, ok := n.(*ast.FuncDecl)
+			if !ok {
+				return true
+			}
+
+			// Проверяем, что это функция main
+			if funcDecl.Name == nil || funcDecl.Name.Name != "main" {
+				return true
+			}
+
+			// Проверяем, что узел находится внутри тела функции main
+			if funcDecl.Body == nil {
+				return true
+			}
+
+			bodyStart := funcDecl.Body.Pos()
+			bodyEnd := funcDecl.Body.End()
+			if nodePos >= bodyStart && nodePos <= bodyEnd {
+				found = true
+				return false // останавливаем обход, так как нашли
 			}
 			return true
 		})

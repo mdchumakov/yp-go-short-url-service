@@ -35,7 +35,6 @@ func main() {
 				PackageName: pkg.Name,
 				Structs:     structs,
 			}
-			fmt.Println(structs)
 			if err := generateResetMethods(&enum, pkg.Dir); err != nil {
 				panic(err)
 			}
@@ -131,7 +130,7 @@ func generateResetMethods(enum *tmpEnum, pkgPath string) error {
 	filePath := filepath.Join(pkgPath, genFileName)
 	err = os.WriteFile(filePath, buf.Bytes(), 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write file: %w", err)
 	}
 
 	return nil
