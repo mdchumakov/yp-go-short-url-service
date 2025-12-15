@@ -53,7 +53,7 @@ func NewFlags() *Flags {
 		"полный URL удаленного сервера-приёмника, куда отправляются логи аудита",
 	)
 
-	enableHttps := flag.Bool(
+	enableHTTPS := flag.Bool(
 		"s",
 		false,
 		"",
@@ -67,6 +67,6 @@ func NewFlags() *Flags {
 		DatabaseDSN:     *databaseDSN,
 		AuditFile:       *auditFile,
 		AuditURL:        *auditURL,
-		EnableHTTPS:     *enableHttps,
+		EnableHTTPS:     *enableHTTPS,
 	}
 }

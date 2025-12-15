@@ -4,7 +4,7 @@ const (
 	defaultServerHost = "localhost"
 	defaultServerPort = 8080
 	defaultBaseURL    = "http://localhost:8080/"
-	defaultHttpsUsage = false
+	defaultHTTPSUsage = false
 )
 
 // ServerSettings содержит настройки HTTP-сервера.

@@ -174,8 +174,8 @@ func (a *App) SetupRoutes() {
 // Run запускает HTTP-сервер приложения на адресе, указанном в настройках.
 // Возвращает ошибку, если сервер не может быть запущен.
 func (a *App) Run() error {
-	enableHttps := a.settings.IsHttpsEnabled()
-	if enableHttps {
+	enableHTTPS := a.settings.IsHTTPSEnabled()
+	if enableHTTPS {
 		a.logger.Infof("Starting HTTPS server at %s", a.settings.GetServerAddress())
 		err := http.ListenAndServeTLS(a.settings.GetServerAddress(), "cert.pem", "key.pem", a.router)
 		if err != nil {

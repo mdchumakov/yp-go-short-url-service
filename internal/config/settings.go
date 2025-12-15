@@ -165,18 +165,18 @@ func (s *Settings) GetAuditURL() string {
 	return defaultAuditURL
 }
 
-// IsHttpsEnabled возвращает true, если HTTPS включен в настройках.
-func (s *Settings) IsHttpsEnabled() bool {
+// IsHTTPSEnabled возвращает true, если HTTPS включен в настройках.
+func (s *Settings) IsHTTPSEnabled() bool {
 	// Если указана переменная окружения, то используется она
-	if enableHttps := s.EnvSettings.Server.EnableHTTPS; enableHttps {
-		return enableHttps
+	if enableHTTPS := s.EnvSettings.Server.EnableHTTPS; enableHTTPS {
+		return enableHTTPS
 	}
 
 	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if enableHttps := s.Flags.EnableHTTPS; enableHttps {
-		return enableHttps
+	if enableHTTPS := s.Flags.EnableHTTPS; enableHTTPS {
+		return enableHTTPS
 	}
 
 	// Если параметр не передан, то не используем параметр по умолчанию.
-	return defaultHttpsUsage
+	return defaultHTTPSUsage
 }
