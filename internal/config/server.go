@@ -4,6 +4,7 @@ const (
 	defaultServerHost = "localhost"
 	defaultServerPort = 8080
 	defaultBaseURL    = "http://localhost:8080/"
+	defaultHttpsUsage = true
 )
 
 // ServerSettings содержит настройки HTTP-сервера.
@@ -15,4 +16,11 @@ type ServerSettings struct {
 	ServerDomain  string `envconfig:"SERVER_DOMAIN" default:"localhost" required:"true"`
 	BaseURL       string `envconfig:"BASE_URL" default:"" required:"false"`
 	Environment   string `envconfig:"ENVIRONMENT" default:"development" required:"false"`
+	EnableHTTPS   bool   `envconfig:"ENABLE_HTTPS" default:"false"`
+}
+
+// IsProd возвращает true, если текущее окружение является производственным (production).
+// Проверяет значение поля Environment на "production" или "prod".
+func (s *ServerSettings) IsProd() bool {
+	return s.Environment == "production" || s.Environment == "prod"
 }

@@ -165,13 +165,25 @@ func (a *App) SetupRoutes() {
 	a.router.GET("/:shortURL", a.fullLinkHandler.Handle)
 	a.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Добавляем pprof роуты для профилирования
-	a.setupPprofRoutes()
+	// Добавляем pprof роуты для профилирования если не в проде
+	if !a.settings.EnvSettings.Server.IsProd() {
+		a.setupPprofRoutes()
+	}
 }
 
 // Run запускает HTTP-сервер приложения на адресе, указанном в настройках.
 // Возвращает ошибку, если сервер не может быть запущен.
 func (a *App) Run() error {
+	enableHttps := a.settings.IsHttpsEnabled()
+	if enableHttps {
+		a.logger.Infof("Starting HTTPS server at %s", a.settings.GetServerAddress())
+		err := http.ListenAndServeTLS(a.settings.GetServerAddress(), "cert.pem", "key.pem", a.router)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 	err := a.router.Run(a.settings.GetServerAddress())
 	return err
 }

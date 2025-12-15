@@ -11,6 +11,7 @@ type Flags struct {
 	DatabaseDSN     string
 	AuditFile       string
 	AuditURL        string
+	EnableHTTPS     bool
 }
 
 // NewFlags создает новый экземпляр флагов командной строки.
@@ -52,6 +53,11 @@ func NewFlags() *Flags {
 		"полный URL удаленного сервера-приёмника, куда отправляются логи аудита",
 	)
 
+	enableHttps := flag.Bool(
+		"s",
+		false,
+		"",
+	)
 	flag.Parse()
 
 	return &Flags{
@@ -61,5 +67,6 @@ func NewFlags() *Flags {
 		DatabaseDSN:     *databaseDSN,
 		AuditFile:       *auditFile,
 		AuditURL:        *auditURL,
+		EnableHTTPS:     *enableHttps,
 	}
 }
