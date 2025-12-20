@@ -8,7 +8,7 @@ import (
 	"yp-go-short-url-service/internal/model"
 	"yp-go-short-url-service/internal/repository"
 	"yp-go-short-url-service/internal/service"
-	"yp-go-short-url-service/internal/utils"
+	"yp-go-short-url-service/internal/utils/files"
 
 	"go.uber.org/zap"
 )
@@ -27,7 +27,7 @@ type dataInitializerService struct {
 // Setup инициализирует данные из файлового хранилища в базу данных или наоборот.
 // Если файл существует, загружает данные из файла в БД. Если файла нет, сохраняет данные из БД в файл.
 func (d *dataInitializerService) Setup(ctx context.Context, fileStoragePath string) error {
-	if isFileExists := utils.CheckFileExists(fileStoragePath); !isFileExists {
+	if isFileExists := files.CheckFileExists(fileStoragePath); !isFileExists {
 		urls, err := d.extractURLSDataFromRepo(ctx)
 		if err != nil {
 			d.logger.Errorw("Failed to extract URLs from DB", "error", err)

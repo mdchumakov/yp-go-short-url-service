@@ -12,6 +12,7 @@ type Flags struct {
 	AuditFile       string
 	AuditURL        string
 	EnableHTTPS     bool
+	JSONConfigPath  string
 }
 
 // NewFlags создает новый экземпляр флагов командной строки.
@@ -58,6 +59,19 @@ func NewFlags() *Flags {
 		false,
 		"",
 	)
+
+	configPath := ""
+	flag.StringVar(&configPath,
+		"c",
+		"",
+		"Путь до файла конфигурации.",
+	)
+	flag.StringVar(&configPath,
+		"config",
+		"",
+		"Путь до файла конфигурации.",
+	)
+
 	flag.Parse()
 
 	return &Flags{
@@ -68,5 +82,6 @@ func NewFlags() *Flags {
 		AuditFile:       *auditFile,
 		AuditURL:        *auditURL,
 		EnableHTTPS:     *enableHTTPS,
+		JSONConfigPath:  configPath,
 	}
 }

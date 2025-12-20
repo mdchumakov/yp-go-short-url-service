@@ -2,10 +2,13 @@ package config
 
 import (
 	"fmt"
-	"strings"
-	"yp-go-short-url-service/internal/config/db"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/samber/lo"
+
+	"strings"
+	"yp-go-short-url-service/internal/config/db"
+	ufiles "yp-go-short-url-service/internal/utils/files"
 )
 
 // Settings представляет основные настройки приложения.
@@ -13,17 +16,30 @@ import (
 type Settings struct {
 	EnvSettings *ENVSettings
 	Flags       *Flags
+	JSONConfig  *SettingsFromJSON
 }
 
 // ENVSettings содержит настройки, загружаемые из переменных окружения.
 // Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
 type ENVSettings struct {
-	Server      *ServerSettings
-	PG          *db.PGSettings
-	SQLite      *db.SQLiteSettings
-	FileStorage *db.FileStorageSettings
-	Audit       *AuditSettings
-	JWT         *JWTSettings
+	Server         *ServerSettings
+	PG             *db.PGSettings
+	SQLite         *db.SQLiteSettings
+	FileStorage    *db.FileStorageSettings
+	Audit          *AuditSettings
+	JWT            *JWTSettings
+	ConfigJSONPath string `envconfig:"CONFIG" default:"" required:"false"`
+}
+
+// SettingsFromJSON используется для загрузки настроек из JSON-файла.
+// Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
+type SettingsFromJSON struct {
+	ServerAddress   string `json:"server_address"`
+	BaseURL         string `json:"base_url"`
+	FileStoragePath string `json:"file_storage_path"`
+	DatabaseDSN     string `json:"database_dsn"`
+	AuditFilePath   string `json:"audit_file_path"`
+	EnableHTTPS     bool   `json:"enable_https"`
 }
 
 // NewSettings создает новый экземпляр настроек приложения.
@@ -32,9 +48,17 @@ func NewSettings() *Settings {
 	envSettings := NewENVSettings()
 	flags := NewFlags()
 
+	fileConfig, err := ufiles.ParseJSON[SettingsFromJSON](
+		lo.CoalesceOrEmpty(flags.JSONConfigPath, envSettings.ConfigJSONPath),
+	)
+
+	if err != nil {
+		fileConfig = &SettingsFromJSON{}
+	}
 	return &Settings{
 		EnvSettings: envSettings,
 		Flags:       flags,
+		JSONConfig:  fileConfig,
 	}
 }
 
@@ -72,10 +96,9 @@ func (s *Settings) GetServerAddress() string {
 		return serverAddr
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
 	return fmt.Sprintf(
 		"%s:%d",
-		defaultServerHost,
+		lo.CoalesceOrEmpty(s.JSONConfig.ServerAddress, defaultServerHost),
 		defaultServerPort,
 	)
 }
@@ -93,8 +116,7 @@ func (s *Settings) GetBaseURL() string {
 		return baseURL
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
-	return defaultBaseURL
+	return lo.CoalesceOrEmpty(s.JSONConfig.BaseURL, defaultBaseURL)
 }
 
 // GetFileStoragePath возвращает путь к файлу для хранения данных в формате JSON.
@@ -110,8 +132,7 @@ func (s *Settings) GetFileStoragePath() string {
 		return fileStoragePath
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
-	return db.DefaultFileStoragePath
+	return lo.CoalesceOrEmpty(s.JSONConfig.FileStoragePath, db.DefaultFileStoragePath)
 }
 
 // GetPostgresDSN возвращает строку подключения к PostgreSQL базе данных.
@@ -127,8 +148,7 @@ func (s *Settings) GetPostgresDSN() string {
 		return dsn
 	}
 
-	// Если нет ни переменной окружения, ни флага, то возвращается DefaultPostgresDSN
-	return db.DefaultPostgresDSN
+	return lo.CoalesceOrEmpty(s.JSONConfig.DatabaseDSN, db.DefaultPostgresDSN)
 }
 
 // GetAuditFilePath возвращает путь к файлу для сохранения логов аудита.
@@ -144,8 +164,7 @@ func (s *Settings) GetAuditFilePath() string {
 		return auditFilePath
 	}
 
-	// Если параметр не передан, аудит в файл должен быть отключён.
-	return defaultAuditFilePath
+	return lo.CoalesceOrEmpty(s.JSONConfig.AuditFilePath, defaultAuditFilePath)
 }
 
 // GetAuditURL возвращает URL удаленного сервера для отправки логов аудита.
@@ -166,6 +185,7 @@ func (s *Settings) GetAuditURL() string {
 }
 
 // IsHTTPSEnabled возвращает true, если HTTPS включен в настройках.
+// Приоритет: переменная окружения > флаг командной строки > значение по умолчанию (false).
 func (s *Settings) IsHTTPSEnabled() bool {
 	// Если указана переменная окружения, то используется она
 	if enableHTTPS := s.EnvSettings.Server.EnableHTTPS; enableHTTPS {
@@ -177,6 +197,5 @@ func (s *Settings) IsHTTPSEnabled() bool {
 		return enableHTTPS
 	}
 
-	// Если параметр не передан, то не используем параметр по умолчанию.
-	return defaultHTTPSUsage
+	return lo.CoalesceOrEmpty(s.JSONConfig.EnableHTTPS, defaultHTTPSUsage)
 }

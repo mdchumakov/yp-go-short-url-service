@@ -1,6 +1,8 @@
-package utils
+package files
 
-import "os"
+import (
+	"os"
+)
 
 // CheckFileExists проверяет существование файла по указанному пути.
 // Возвращает true, если файл существует, и false в противном случае.
