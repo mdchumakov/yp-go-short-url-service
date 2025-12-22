@@ -1,8 +1,8 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"os"
 	"os/signal"
 	"syscall"
 	"yp-go-short-url-service/internal/app"
@@ -39,9 +39,9 @@ func main() {
 	service.SetupCommonMiddlewares()
 	service.SetupRoutes()
 
-	// Создаем канал для сигналов завершения
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	// Создаем контекст для graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
 
 	// Запускаем сервер в горутине
 	go func() {
@@ -50,8 +50,8 @@ func main() {
 		}
 	}()
 
-	// Ждем сигнала завершения
-	<-sigChan
+	// Ждем сигнала завершения через контекст
+	<-ctx.Done()
 	logger.Info("Received shutdown signal")
 
 	// Корректно останавливаем приложение
