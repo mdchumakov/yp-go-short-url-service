@@ -1,14 +1,15 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/samber/lo"
 
 	"strings"
 	"yp-go-short-url-service/internal/config/db"
-	ufiles "yp-go-short-url-service/internal/utils/files"
 )
 
 // Settings представляет основные настройки приложения.
@@ -57,11 +58,16 @@ func NewSettings() (*Settings, error) {
 	// Если путь к JSON-файлу указан, пытаемся его распарсить
 	// Если путь не указан, fileConfig остается nil (это нормально)
 	if jsonConfigPath != "" {
-		var err error
-		fileConfig, err = ufiles.ParseJSON[SettingsFromJSON](jsonConfigPath)
+		b, err := os.ReadFile(jsonConfigPath)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse json config: %w", err)
+			return nil, fmt.Errorf("could not read json config file %s: %w", jsonConfigPath, err)
 		}
+
+		var parsedJSON SettingsFromJSON
+		if err = json.Unmarshal(b, &parsedJSON); err != nil {
+			return nil, fmt.Errorf("could not parse json config file %s: %w", jsonConfigPath, err)
+		}
+		fileConfig = &parsedJSON
 	}
 
 	return &Settings{
