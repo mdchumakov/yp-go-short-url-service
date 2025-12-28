@@ -44,22 +44,31 @@ type SettingsFromJSON struct {
 
 // NewSettings создает новый экземпляр настроек приложения.
 // Загружает настройки из переменных окружения и флагов командной строки.
-func NewSettings() *Settings {
+// Если путь к JSON-файлу указан, но файл не может быть прочитан или распарсен,
+// возвращает ошибку.
+func NewSettings() (*Settings, error) {
 	envSettings := NewENVSettings()
 	flags := NewFlags()
 
-	fileConfig, err := ufiles.ParseJSON[SettingsFromJSON](
-		lo.CoalesceOrEmpty(flags.JSONConfigPath, envSettings.ConfigJSONPath),
-	)
+	// Определяем путь к JSON-файлу конфигурации
+	jsonConfigPath := lo.CoalesceOrEmpty(flags.JSONConfigPath, envSettings.ConfigJSONPath)
 
-	if err != nil {
-		fileConfig = &SettingsFromJSON{}
+	var fileConfig *SettingsFromJSON
+	// Если путь к JSON-файлу указан, пытаемся его распарсить
+	// Если путь не указан, fileConfig остается nil (это нормально)
+	if jsonConfigPath != "" {
+		var err error
+		fileConfig, err = ufiles.ParseJSON[SettingsFromJSON](jsonConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse json config: %w", err)
+		}
 	}
+
 	return &Settings{
 		EnvSettings: envSettings,
 		Flags:       flags,
 		JSONConfig:  fileConfig,
-	}
+	}, nil
 }
 
 // NewENVSettings создает новый экземпляр настроек окружения.

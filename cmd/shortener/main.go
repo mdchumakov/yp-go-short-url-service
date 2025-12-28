@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/signal"
 	"syscall"
 	"yp-go-short-url-service/internal/app"
@@ -28,20 +29,25 @@ var buildVersion, buildDate, buildCommit string
 func main() {
 	printMetaInfo()
 
-	logger, err := config.NewLogger(false)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	defer config.SyncLogger(logger)
-
-	service := app.NewApp(logger)
-
-	service.SetupCommonMiddlewares()
-	service.SetupRoutes()
-
 	// Создаем контекст для graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
+
+	logger, err := config.NewLogger(false)
+	if err != nil {
+		fmt.Printf("failed to initialize logger: %s\n", err)
+		os.Exit(1)
+	}
+	defer config.SyncLogger(logger)
+
+	service, err := app.NewApp(logger, ctx)
+	if err != nil {
+		logger.Errorw("Failed to initialize application", "error", err)
+		os.Exit(1)
+	}
+
+	service.SetupCommonMiddlewares()
+	service.SetupRoutes()
 
 	// Запускаем сервер в горутине
 	go func() {

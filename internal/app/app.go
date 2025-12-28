@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
@@ -70,12 +71,13 @@ type DataBus struct {
 
 // NewApp создает новый экземпляр приложения с инициализированными зависимостями.
 // Инициализирует базу данных, репозитории, сервисы, обработчики и настраивает маршруты.
-// Возвращает готовый к использованию экземпляр App.
-func NewApp(logger *zap.SugaredLogger) *App {
-	ctx := context.Background()
-
+// Возвращает готовый к использованию экземпляр App или ошибку, если инициализация не удалась.
+func NewApp(logger *zap.SugaredLogger, ctx context.Context) (*App, error) {
 	router := gin.Default()
-	settings := config.NewSettings()
+	settings, err := config.NewSettings()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load settings: %w", err)
+	}
 	jwtSettings := settings.EnvSettings.JWT
 
 	dbPool := db.Setup(ctx, logger, &db.SetupParams{
@@ -83,12 +85,16 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		SQLiteDSN:        settings.EnvSettings.SQLite.SQLiteDBPath,
 		PGMigrationsPath: settings.EnvSettings.PG.MigrationsPath,
 	})
+	// Проверяем, что db.Setup не вернул ошибку
+	if err, ok := dbPool.(error); ok {
+		return nil, fmt.Errorf("failed to setup database: %w", err)
+	}
 	repoURLs := baseRepo.NewURLsRepository(dbPool)
 	userRepo := baseRepo.NewUsersRepository(dbPool)
 	userURLsRepo := baseRepo.NewUserURLsRepository(dbPool)
 	InitService := initService.NewDataInitializerService(repoURLs, logger)
 	if err := InitService.Setup(ctx, settings.GetFileStoragePath()); err != nil {
-		logger.Fatalw("Failed to initialize data", "error", err)
+		return nil, fmt.Errorf("failed to initialize data: %w", err)
 	}
 
 	AuthService := authService.NewAuthService(userRepo, jwtSettings)
@@ -128,7 +134,7 @@ func NewApp(logger *zap.SugaredLogger) *App {
 		dataBus: DataBus{
 			auditEventBus: auditEventBus,
 		},
-	}
+	}, nil
 }
 
 // SetupCommonMiddlewares настраивает общие middleware для всех маршрутов.
