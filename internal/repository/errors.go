@@ -15,6 +15,8 @@ var (
 	ErrURLExists = errors.New("URL уже существует")
 	// ErrUserNotFound возвращается, когда запрашиваемый пользователь не найден в базе данных.
 	ErrUserNotFound = errors.New("пользователь не найден")
+	// ErrNoUsers возвращается, когда нет пользователей в базе данных.
+	ErrNoUsers = errors.New("нет пользователей в базе данных")
 )
 
 // IsNotFoundError проверяет, является ли ошибка ошибкой "не найдено"

@@ -17,6 +17,27 @@ type usersRepository struct {
 	pool *pgxpool.Pool
 }
 
+func (r *usersRepository) GetUsersCount(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM users`
+
+	result, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get users count: %w", err)
+	}
+	defer result.Close()
+
+	var count int64
+	if result.Next() {
+		if err := result.Scan(&count); err != nil {
+			return 0, fmt.Errorf("failed to scan users count: %w", err)
+		}
+	} else {
+		return 0, errors.New("no rows returned for users count")
+	}
+
+	return count, nil
+}
+
 // NewUsersRepository создает новый репозиторий для работы с пользователями в PostgreSQL базе данных.
 // Принимает пул соединений PostgreSQL и возвращает реализацию интерфейса UserRepository.
 func NewUsersRepository(pool *pgxpool.Pool) repository.UserRepository {

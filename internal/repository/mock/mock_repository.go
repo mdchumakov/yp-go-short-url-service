@@ -10,7 +10,7 @@
 package mock
 
 import (
-	context "context"
+	"context"
 	reflect "reflect"
 	time "time"
 	model "yp-go-short-url-service/internal/model"
@@ -301,6 +301,11 @@ type MockUserRepository struct {
 	isgomock struct{}
 }
 
+func (m *MockUserRepository) GetUsersCount(ctx context.context.Context)  (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // MockUserRepositoryMockRecorder is the mock recorder for MockUserRepository.
 type MockUserRepositoryMockRecorder struct {
 	mock *MockUserRepository
@@ -407,6 +412,11 @@ type MockUserRepositoryReader struct {
 	ctrl     *gomock.Controller
 	recorder *MockUserRepositoryReaderMockRecorder
 	isgomock struct{}
+}
+
+func (m *MockUserRepositoryReader) GetUsersCount(ctx context.context.Context)  (int64, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // MockUserRepositoryReaderMockRecorder is the mock recorder for MockUserRepositoryReader.

@@ -1,10 +1,11 @@
 package config
 
 const (
-	defaultServerHost = "localhost"
-	defaultServerPort = 8080
-	defaultBaseURL    = "http://localhost:8080/"
-	defaultHTTPSUsage = false
+	defaultServerHost    = "localhost"
+	defaultServerPort    = 8080
+	defaultBaseURL       = "http://localhost:8080/"
+	defaultHTTPSUsage    = false
+	defaultTrustedSubnet = "0.0.0.0/0"
 )
 
 // ServerSettings содержит настройки HTTP-сервера.
@@ -17,6 +18,7 @@ type ServerSettings struct {
 	BaseURL       string `envconfig:"BASE_URL" default:"" required:"false"`
 	Environment   string `envconfig:"ENVIRONMENT" default:"development" required:"false"`
 	EnableHTTPS   bool   `envconfig:"ENABLE_HTTPS" default:"false"`
+	TrustedSubnet string `envconfig:"TRUSTED_SUBNET" default:"" required:"false"`
 }
 
 // IsProd возвращает true, если текущее окружение является производственным (production).

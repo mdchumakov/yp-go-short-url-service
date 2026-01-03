@@ -41,6 +41,7 @@ type SettingsFromJSON struct {
 	DatabaseDSN     string `json:"database_dsn"`
 	AuditFilePath   string `json:"audit_file_path"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // NewSettings создает новый экземпляр настроек приложения.
@@ -93,28 +94,28 @@ func NewENVSettings() *ENVSettings {
 // GetServerAddress возвращает адрес сервера для запуска HTTP-сервера.
 // Приоритет: переменная окружения > флаг командной строки > значения по умолчанию.
 func (s *Settings) GetServerAddress() string {
-	// Если указана переменная окружения, то используется она
-	if serverAddr := strings.TrimSpace(s.EnvSettings.Server.ServerAddress); serverAddr != "" {
-		return serverAddr
-	}
-	if strings.TrimSpace(s.EnvSettings.Server.ServerHost) != "" &&
-		s.EnvSettings.Server.ServerPort != 0 {
-		return fmt.Sprintf(
-			"%s:%d",
-			s.EnvSettings.Server.ServerHost,
-			s.EnvSettings.Server.ServerPort,
-		)
+	var envServerAddr, flagServerAddr, confServerAddr string
+	var envServerPort, flagServerPort, confServerPort int
+
+	if s.EnvSettings != nil {
+		envServerAddr = strings.TrimSpace(s.EnvSettings.Server.ServerAddress)
+		envServerPort = s.EnvSettings.Server.ServerPort
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if serverAddr := strings.TrimSpace(s.Flags.ServerAddress); serverAddr != "" {
-		return serverAddr
+	if s.Flags != nil {
+		flagServerAddr = strings.TrimSpace(s.Flags.ServerAddress)
+		flagServerPort = defaultServerPort
+	}
+
+	if s.JSONConfig != nil {
+		confServerAddr = strings.TrimSpace(s.JSONConfig.ServerAddress)
+		confServerPort = defaultServerPort
 	}
 
 	return fmt.Sprintf(
 		"%s:%d",
-		lo.CoalesceOrEmpty(s.JSONConfig.ServerAddress, defaultServerHost),
-		defaultServerPort,
+		lo.CoalesceOrEmpty(envServerAddr, flagServerAddr, confServerAddr, defaultServerHost),
+		lo.CoalesceOrEmpty(envServerPort, flagServerPort, confServerPort, defaultServerPort),
 	)
 }
 
@@ -131,7 +132,11 @@ func (s *Settings) GetBaseURL() string {
 		return baseURL
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.BaseURL, defaultBaseURL)
+	if s.JSONConfig != nil {
+		return lo.CoalesceOrEmpty(s.JSONConfig.BaseURL, defaultBaseURL)
+	}
+
+	return defaultBaseURL
 }
 
 // GetFileStoragePath возвращает путь к файлу для хранения данных в формате JSON.
@@ -147,7 +152,10 @@ func (s *Settings) GetFileStoragePath() string {
 		return fileStoragePath
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.FileStoragePath, db.DefaultFileStoragePath)
+	if s.JSONConfig != nil {
+		return lo.CoalesceOrEmpty(s.JSONConfig.FileStoragePath, db.DefaultFileStoragePath)
+	}
+	return db.DefaultFileStoragePath
 }
 
 // GetPostgresDSN возвращает строку подключения к PostgreSQL базе данных.
@@ -163,7 +171,10 @@ func (s *Settings) GetPostgresDSN() string {
 		return dsn
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.DatabaseDSN, db.DefaultPostgresDSN)
+	if s.JSONConfig != nil {
+		return lo.CoalesceOrEmpty(s.JSONConfig.DatabaseDSN, db.DefaultPostgresDSN)
+	}
+	return db.DefaultPostgresDSN
 }
 
 // GetAuditFilePath возвращает путь к файлу для сохранения логов аудита.
@@ -213,4 +224,16 @@ func (s *Settings) IsHTTPSEnabled() bool {
 	}
 
 	return lo.CoalesceOrEmpty(s.JSONConfig.EnableHTTPS, defaultHTTPSUsage)
+}
+
+func (s *Settings) GetTrustedSubnet() string {
+	if trustedSubnet := strings.TrimSpace(s.EnvSettings.Server.TrustedSubnet); trustedSubnet != "" {
+		return trustedSubnet
+	}
+
+	if trustedSubnet := strings.TrimSpace(s.Flags.TrustedSubnet); trustedSubnet != "" {
+		return trustedSubnet
+	}
+
+	return lo.CoalesceOrEmpty(s.JSONConfig.TrustedSubnet, defaultTrustedSubnet)
 }
