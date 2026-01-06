@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -143,12 +142,7 @@ func TestSetJWTCookie(t *testing.T) {
 	// Проверяем, что куки установлены
 	result := w.Result()
 	if result.Body != nil {
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(result.Body)
+		defer result.Body.Close()
 	}
 	cookies := result.Cookies()
 	assert.Len(t, cookies, 1)
@@ -187,12 +181,7 @@ func TestClearJWTCookie(t *testing.T) {
 	// Проверяем, что куки установлены с отрицательным временем жизни
 	result := w.Result()
 	if result.Body != nil {
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(result.Body)
+		defer result.Body.Close()
 	}
 	cookies := result.Cookies()
 	assert.Len(t, cookies, 1)
