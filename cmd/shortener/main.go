@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -28,20 +29,25 @@ var buildVersion, buildDate, buildCommit string
 func main() {
 	printMetaInfo()
 
+	// Создаем контекст для graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+
 	logger, err := config.NewLogger(false)
 	if err != nil {
-		logger.Fatal(err)
+		fmt.Printf("failed to initialize logger: %s\n", err)
+		os.Exit(1)
 	}
 	defer config.SyncLogger(logger)
 
-	service := app.NewApp(logger)
+	service, err := app.NewApp(logger, ctx)
+	if err != nil {
+		logger.Errorw("Failed to initialize application", "error", err)
+		os.Exit(1)
+	}
 
 	service.SetupCommonMiddlewares()
 	service.SetupRoutes()
-
-	// Создаем канал для сигналов завершения
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// Запускаем сервер в горутине
 	go func() {
@@ -50,8 +56,8 @@ func main() {
 		}
 	}()
 
-	// Ждем сигнала завершения
-	<-sigChan
+	// Ждем сигнала завершения через контекст
+	<-ctx.Done()
 	logger.Info("Received shutdown signal")
 
 	// Корректно останавливаем приложение

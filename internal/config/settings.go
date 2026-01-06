@@ -1,11 +1,15 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
-	"yp-go-short-url-service/internal/config/db"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/samber/lo"
+
+	"strings"
+	"yp-go-short-url-service/internal/config/db"
 )
 
 // Settings представляет основные настройки приложения.
@@ -13,29 +17,64 @@ import (
 type Settings struct {
 	EnvSettings *ENVSettings
 	Flags       *Flags
+	JSONConfig  *SettingsFromJSON
 }
 
 // ENVSettings содержит настройки, загружаемые из переменных окружения.
 // Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
 type ENVSettings struct {
-	Server      *ServerSettings
-	PG          *db.PGSettings
-	SQLite      *db.SQLiteSettings
-	FileStorage *db.FileStorageSettings
-	Audit       *AuditSettings
-	JWT         *JWTSettings
+	Server         *ServerSettings
+	PG             *db.PGSettings
+	SQLite         *db.SQLiteSettings
+	FileStorage    *db.FileStorageSettings
+	Audit          *AuditSettings
+	JWT            *JWTSettings
+	ConfigJSONPath string `envconfig:"CONFIG" default:"" required:"false"`
+}
+
+// SettingsFromJSON используется для загрузки настроек из JSON-файла.
+// Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
+type SettingsFromJSON struct {
+	ServerAddress   string `json:"server_address"`
+	BaseURL         string `json:"base_url"`
+	FileStoragePath string `json:"file_storage_path"`
+	DatabaseDSN     string `json:"database_dsn"`
+	AuditFilePath   string `json:"audit_file_path"`
+	EnableHTTPS     bool   `json:"enable_https"`
 }
 
 // NewSettings создает новый экземпляр настроек приложения.
 // Загружает настройки из переменных окружения и флагов командной строки.
-func NewSettings() *Settings {
+// Если путь к JSON-файлу указан, но файл не может быть прочитан или распарсен,
+// возвращает ошибку.
+func NewSettings() (*Settings, error) {
 	envSettings := NewENVSettings()
 	flags := NewFlags()
+
+	// Определяем путь к JSON-файлу конфигурации
+	jsonConfigPath := lo.CoalesceOrEmpty(flags.JSONConfigPath, envSettings.ConfigJSONPath)
+
+	var fileConfig *SettingsFromJSON
+	// Если путь к JSON-файлу указан, пытаемся его распарсить
+	// Если путь не указан, fileConfig остается nil (это нормально)
+	if jsonConfigPath != "" {
+		b, err := os.ReadFile(jsonConfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("could not read json config file %s: %w", jsonConfigPath, err)
+		}
+
+		var parsedJSON SettingsFromJSON
+		if err = json.Unmarshal(b, &parsedJSON); err != nil {
+			return nil, fmt.Errorf("could not parse json config file %s: %w", jsonConfigPath, err)
+		}
+		fileConfig = &parsedJSON
+	}
 
 	return &Settings{
 		EnvSettings: envSettings,
 		Flags:       flags,
-	}
+		JSONConfig:  fileConfig,
+	}, nil
 }
 
 // NewENVSettings создает новый экземпляр настроек окружения.
@@ -72,10 +111,9 @@ func (s *Settings) GetServerAddress() string {
 		return serverAddr
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
 	return fmt.Sprintf(
 		"%s:%d",
-		defaultServerHost,
+		lo.CoalesceOrEmpty(s.JSONConfig.ServerAddress, defaultServerHost),
 		defaultServerPort,
 	)
 }
@@ -93,8 +131,7 @@ func (s *Settings) GetBaseURL() string {
 		return baseURL
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
-	return defaultBaseURL
+	return lo.CoalesceOrEmpty(s.JSONConfig.BaseURL, defaultBaseURL)
 }
 
 // GetFileStoragePath возвращает путь к файлу для хранения данных в формате JSON.
@@ -110,8 +147,7 @@ func (s *Settings) GetFileStoragePath() string {
 		return fileStoragePath
 	}
 
-	// Если нет ни переменной окружения, ни флага, то используются значения по умолчанию
-	return db.DefaultFileStoragePath
+	return lo.CoalesceOrEmpty(s.JSONConfig.FileStoragePath, db.DefaultFileStoragePath)
 }
 
 // GetPostgresDSN возвращает строку подключения к PostgreSQL базе данных.
@@ -127,8 +163,7 @@ func (s *Settings) GetPostgresDSN() string {
 		return dsn
 	}
 
-	// Если нет ни переменной окружения, ни флага, то возвращается DefaultPostgresDSN
-	return db.DefaultPostgresDSN
+	return lo.CoalesceOrEmpty(s.JSONConfig.DatabaseDSN, db.DefaultPostgresDSN)
 }
 
 // GetAuditFilePath возвращает путь к файлу для сохранения логов аудита.
@@ -144,8 +179,7 @@ func (s *Settings) GetAuditFilePath() string {
 		return auditFilePath
 	}
 
-	// Если параметр не передан, аудит в файл должен быть отключён.
-	return defaultAuditFilePath
+	return lo.CoalesceOrEmpty(s.JSONConfig.AuditFilePath, defaultAuditFilePath)
 }
 
 // GetAuditURL возвращает URL удаленного сервера для отправки логов аудита.
@@ -163,4 +197,20 @@ func (s *Settings) GetAuditURL() string {
 
 	// Если параметр не передан, аудит на удалённый сервер должен быть отключён.
 	return defaultAuditURL
+}
+
+// IsHTTPSEnabled возвращает true, если HTTPS включен в настройках.
+// Приоритет: переменная окружения > флаг командной строки > значение по умолчанию (false).
+func (s *Settings) IsHTTPSEnabled() bool {
+	// Если указана переменная окружения, то используется она
+	if enableHTTPS := s.EnvSettings.Server.EnableHTTPS; enableHTTPS {
+		return enableHTTPS
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if enableHTTPS := s.Flags.EnableHTTPS; enableHTTPS {
+		return enableHTTPS
+	}
+
+	return lo.CoalesceOrEmpty(s.JSONConfig.EnableHTTPS, defaultHTTPSUsage)
 }
