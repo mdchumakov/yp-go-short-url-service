@@ -14,7 +14,7 @@ import (
 )
 
 type usersRepository struct {
-	pool *pgxpool.Pool
+	pool PoolInterface
 }
 
 func (r *usersRepository) GetUsersCount(ctx context.Context) (int64, error) {

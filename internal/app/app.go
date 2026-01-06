@@ -7,7 +7,7 @@ import (
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
 	"yp-go-short-url-service/internal/handler/health"
-	statsHandler "yp-go-short-url-service/internal/handler/intern/stats"
+	statsHandler "yp-go-short-url-service/internal/handler/stats"
 	urlsDestructorAPIHandler "yp-go-short-url-service/internal/handler/urls/destructor"
 	urlExtractorHandler "yp-go-short-url-service/internal/handler/urls/extractor"
 	userURLsHandler "yp-go-short-url-service/internal/handler/urls/extractor/user"
