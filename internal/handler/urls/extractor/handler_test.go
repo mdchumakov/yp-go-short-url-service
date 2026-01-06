@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
 	"yp-go-short-url-service/internal/middleware"
@@ -23,7 +23,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 	tests := []struct {
 		name           string
 		shortURL       string
-		setupMock      func(*serviceMock.MockLinkExtractorService)
+		setupMock      func(service *serviceMock.MockURLExtractorService)
 		expectedStatus int
 		expectedBody   string
 		expectedHeader string
@@ -32,7 +32,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "успешное перенаправление на длинный URL",
 			shortURL: "abc123",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				mockService.EXPECT().
 					ExtractLongURL(gomock.Any(), "abc123").
 					Return("https://example.com/very/long/url", nil)
@@ -44,7 +44,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "пустой параметр shortURL",
 			shortURL: "",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				// Сервис не должен вызываться при пустом параметре
 			},
 			expectedStatus: http.StatusBadRequest,
@@ -53,7 +53,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "ошибка сервиса при извлечении URL",
 			shortURL: "error123",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				mockService.EXPECT().
 					ExtractLongURL(gomock.Any(), "error123").
 					Return("", errors.New("database connection failed"))
@@ -64,7 +64,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "ссылка не найдена (пустой результат)",
 			shortURL: "notfound",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				mockService.EXPECT().
 					ExtractLongURL(gomock.Any(), "notfound").
 					Return("", nil)
@@ -75,7 +75,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "ссылка не найдена (пустая строка)",
 			shortURL: "empty",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				mockService.EXPECT().
 					ExtractLongURL(gomock.Any(), "empty").
 					Return("", nil)
@@ -86,7 +86,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 		{
 			name:     "специальные символы в shortURL",
 			shortURL: "test-123_456",
-			setupMock: func(mockService *serviceMock.MockLinkExtractorService) {
+			setupMock: func(mockService *serviceMock.MockURLExtractorService) {
 				mockService.EXPECT().
 					ExtractLongURL(gomock.Any(), "test-123_456").
 					Return("https://example.com/special-chars", nil)
@@ -104,7 +104,7 @@ func TestExtractingLongURLHandler_Handle(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+			mockService := serviceMock.NewMockURLExtractorService(ctrl)
 			if tt.setupMock != nil {
 				tt.setupMock(mockService)
 			}
@@ -157,7 +157,7 @@ func TestExtractingLongURLHandler_Handle_WithRequestID(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 		mockService.EXPECT().
 			ExtractLongURL(gomock.Any(), "custom123").
 			Return("https://example.com/custom", nil)
@@ -193,7 +193,7 @@ func TestExtractingLongURLHandler_Handle_WithRequestID(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 		mockService.EXPECT().
 			ExtractLongURL(gomock.Any(), "no-request-id").
 			Return("https://example.com/no-request-id", nil)
@@ -230,7 +230,7 @@ func TestExtractingLongURLHandler_Handle_ServiceIntegration(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 
 		// Ожидаем, что ExtractLongURL будет вызван с контекстом, содержащим логгер и request ID
 		mockService.EXPECT().
@@ -282,7 +282,7 @@ func TestNewExtractingFullLinkHandler(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 
 		// Act
 		handler := NewExtractingFullLinkHandler(mockService)
@@ -308,7 +308,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		defer ctrl.Finish()
 
 		longShortURL := "very-long-short-url-that-exceeds-normal-length-limits-and-should-be-handled-properly"
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 		mockService.EXPECT().
 			ExtractLongURL(gomock.Any(), longShortURL).
 			Return("https://example.com/very-long", nil)
@@ -344,7 +344,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 		mockService.EXPECT().
 			ExtractLongURL(gomock.Any(), "special-123_456").
 			Return("https://example.com/special-chars", nil)
@@ -380,7 +380,7 @@ func TestExtractingLongURLHandler_Handle_EdgeCases(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockService := serviceMock.NewMockLinkExtractorService(ctrl)
+		mockService := serviceMock.NewMockURLExtractorService(ctrl)
 		mockService.EXPECT().
 			ExtractLongURL(gomock.Any(), "timeout").
 			Return("", errors.New("connection timeout"))

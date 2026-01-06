@@ -155,6 +155,11 @@ func (a *App) SetupCommonMiddlewares() {
 // Создает публичные и приватные группы маршрутов с соответствующими middleware.
 // Настраивает маршруты для сокращения URL, получения URL, удаления URL и health check.
 func (a *App) SetupRoutes() {
+	internalMiddleware := middleware.NewInternalMiddleware(
+		a.logger,
+		a.settings.GetTrustedSubnet(),
+	).InternalMiddlewareHandler()
+
 	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
 	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
 
@@ -165,7 +170,12 @@ func (a *App) SetupRoutes() {
 		publicGroup.POST("/", a.shortLinksHandler.Handle)
 		publicGroup.POST("/api/shorten", a.shortLinksHandlerAPI.Handle)
 		publicGroup.POST("/api/shorten/batch", a.shortLinksBatchHandlerAPI.Handle)
-		publicGroup.GET("/api/internal/stats", a.statsHandler.Handle)
+	}
+
+	internalGroup := publicGroup.Group("/api/internal")
+	internalGroup.Use(internalMiddleware)
+	{
+		internalGroup.GET("/stats", a.statsHandler.Handle)
 	}
 
 	privateGroup := a.router.Group("/")
