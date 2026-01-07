@@ -1,4 +1,4 @@
-Подготовка образа PostgreSQL с расширением PostGIS и запуск контейнера Docker
+Подготовка образа PostgreSQL/запуск контейнера
 ```bash
 docker build -f DockerfilePG -t yp-postgres .
 ```
