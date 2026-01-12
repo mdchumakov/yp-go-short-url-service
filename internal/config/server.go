@@ -3,6 +3,8 @@ package config
 const (
 	defaultServerHost = "localhost"
 	defaultServerPort = 8080
+	defaultGRPCPort   = 9090
+	defaultGRPCHost   = defaultServerHost
 	defaultBaseURL    = "http://localhost:8080/"
 	defaultHTTPSUsage = false
 )
@@ -13,6 +15,9 @@ type ServerSettings struct {
 	ServerAddress string `envconfig:"SERVER_ADDRESS" default:"" required:"false"`
 	ServerHost    string `envconfig:"SERVER_HOST" default:"" required:"false"`
 	ServerPort    int    `envconfig:"SERVER_PORT" default:"0" required:"false"`
+	GRPCAddress   string `envconfig:"GRPC_ADDRESS" default:"" required:"false"`
+	GRPCHost      string `envconfig:"GRPC_HOST" default:"" required:"false"`
+	GRPCPort      int    `envconfig:"GRPC_PORT" default:"0" required:"false"`
 	ServerDomain  string `envconfig:"SERVER_DOMAIN" default:"localhost" required:"true"`
 	BaseURL       string `envconfig:"BASE_URL" default:"" required:"false"`
 	Environment   string `envconfig:"ENVIRONMENT" default:"development" required:"false"`

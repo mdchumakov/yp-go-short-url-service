@@ -36,6 +36,7 @@ type ENVSettings struct {
 // Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
 type SettingsFromJSON struct {
 	ServerAddress   string `json:"server_address"`
+	GRPCAddress     string `json:"grpc_address"`
 	BaseURL         string `json:"base_url"`
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
@@ -115,6 +116,33 @@ func (s *Settings) GetServerAddress() string {
 		"%s:%d",
 		lo.CoalesceOrEmpty(s.JSONConfig.ServerAddress, defaultServerHost),
 		defaultServerPort,
+	)
+}
+
+func (s *Settings) GetGRPCServerAddress() string {
+	// Если указана переменная окружения, то используется она
+	if serverAddr := strings.TrimSpace(s.EnvSettings.Server.GRPCAddress); serverAddr != "" {
+		return serverAddr
+	}
+
+	if strings.TrimSpace(s.EnvSettings.Server.GRPCHost) != "" &&
+		s.EnvSettings.Server.GRPCPort != 0 {
+		return fmt.Sprintf(
+			"%s:%d",
+			s.EnvSettings.Server.GRPCHost,
+			s.EnvSettings.Server.GRPCPort,
+		)
+	}
+
+	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
+	if serverAddr := strings.TrimSpace(s.Flags.GRPCAddress); serverAddr != "" {
+		return serverAddr
+	}
+
+	return fmt.Sprintf(
+		"%s:%d",
+		lo.CoalesceOrEmpty(s.JSONConfig.GRPCAddress, defaultGRPCHost),
+		defaultGRPCPort,
 	)
 }
 

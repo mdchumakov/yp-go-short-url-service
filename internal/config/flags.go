@@ -6,6 +6,7 @@ import "flag"
 // Позволяет переопределить настройки из переменных окружения через аргументы командной строки.
 type Flags struct {
 	ServerAddress   string
+	GRPCAddress     string
 	BaseURL         string
 	FileStoragePath string
 	DatabaseDSN     string
@@ -22,6 +23,11 @@ func NewFlags() *Flags {
 		"a",
 		"",
 		"Отвечает за адрес запуска HTTP-сервера (значение может быть таким: localhost:8888)",
+	)
+	grpcAddr := flag.String(
+		"g",
+		"",
+		"Отвечает за адрес запуска gRPC-сервера (значение может быть таким: localhost:9090)",
 	)
 	redirectURL := flag.String(
 		"b",
@@ -76,6 +82,7 @@ func NewFlags() *Flags {
 
 	return &Flags{
 		ServerAddress:   *connectionAddr,
+		GRPCAddress:     *grpcAddr,
 		BaseURL:         *redirectURL,
 		FileStoragePath: *fileStoragePath,
 		DatabaseDSN:     *databaseDSN,

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
 	"yp-go-short-url-service/internal/handler"
@@ -37,12 +38,14 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 // App представляет основное приложение сервиса сокращения URL.
 // Содержит роутер, обработчики запросов, сервисы и настройки.
 type App struct {
 	router                    *gin.Engine
+	grpcServer                *grpc.Server
 	shortLinksHandler         handler.Handler
 	shortLinksHandlerAPI      handler.Handler
 	shortLinksBatchHandlerAPI handler.Handler
@@ -194,6 +197,26 @@ func (a *App) Run() error {
 	return err
 }
 
+func (a *App) RunGRPC() error {
+	grpcAddr := a.settings.GetGRPCServerAddress()
+	a.logger.Infof("Starting gRPC server at %s", grpcAddr)
+
+	lis, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %w", grpcAddr, err)
+	}
+
+	if err := a.grpcServer.Serve(lis); err != nil {
+		return fmt.Errorf("failed to serve gRPC: %w", err)
+	}
+
+	return nil
+}
+
+func (a *App) createGRPCServer() *grpc.Server {
+	return grpc.NewServer()
+}
+
 // setupPprofRoutes настраивает роуты для pprof профилирования
 func (a *App) setupPprofRoutes() {
 	pprofGroup := a.router.Group("/debug/pprof")
@@ -215,6 +238,13 @@ func (a *App) setupPprofRoutes() {
 // Останавливает все фоновые сервисы (например, сервис удаления URL) и завершает работу приложения.
 func (a *App) Stop() {
 	a.logger.Info("Stopping application...")
+
+	// Graceful shutdown gRPC сервера
+	if a.grpcServer != nil {
+		a.logger.Info("Stopping gRPC server...")
+		a.grpcServer.GracefulStop()
+	}
+
 	if a.services.urlDestructor != nil {
 		a.services.urlDestructor.Stop()
 	}
