@@ -1,4 +1,4 @@
-//go:generate $HOME/go/bin/mockgen -source=interfaces.go -destination=mock/mock_service.go -package=mock
+//go:generate mockgen -source=interfaces.go -destination=mock/mock_service.go -package=mock
 
 package service
 
@@ -63,4 +63,11 @@ type JWTService interface {
 	RefreshToken(ctx context.Context, token string) (string, error)
 	IsTokenExpired(ctx context.Context, token string) (bool, error)
 	GetTokenExpirationTime(ctx context.Context, token string) (*time.Time, error)
+}
+
+// StatsService определяет интерфейс для сервиса статистики.
+// Предоставляет методы для получения общей статистики по URL и пользователям.
+type StatsService interface {
+	GetTotalURLsCount(ctx context.Context) (int64, error)
+	GetTotalUsersCount(ctx context.Context) (int64, error)
 }

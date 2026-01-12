@@ -16,6 +16,11 @@ type usersRepository struct {
 	db *sql.DB
 }
 
+func (r *usersRepository) GetUsersCount(ctx context.Context) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewUsersRepository создает новый репозиторий для работы с пользователями в SQLite базе данных.
 // Принимает соединение с SQLite и возвращает реализацию интерфейса UserRepository.
 func NewUsersRepository(db *sql.DB) repository.UserRepository {

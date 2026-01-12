@@ -14,8 +14,8 @@ import (
 	serviceMock "yp-go-short-url-service/internal/service/mock"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 const apiPath = "/api/shorten"
@@ -54,7 +54,7 @@ func TestCreatingShortLinksAPI_Handle_GZIPRequest_Success(t *testing.T) {
 	expectedShortURL := "abc123"
 	settings := getDefaultSettings()
 
-	mockService := serviceMock.NewMockLinkShortenerService(ctrl)
+	mockService := serviceMock.NewMockURLShortenerService(ctrl)
 	handler := json2.NewCreatingShortURLsAPIHandler(mockService, settings)
 
 	r.Use(Middleware(logger))

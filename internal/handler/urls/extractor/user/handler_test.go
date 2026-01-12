@@ -14,8 +14,8 @@ import (
 	"yp-go-short-url-service/internal/service/mock"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 
@@ -37,10 +37,10 @@ func getDefaultSettings() *config.Settings {
 	}
 }
 
-func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockLinkExtractorService) {
+func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockURLExtractorService) {
 	gin.SetMode(gin.TestMode)
 	ctrl := gomock.NewController(t)
-	mockService := mock.NewMockLinkExtractorService(ctrl)
+	mockService := mock.NewMockURLExtractorService(ctrl)
 
 	handler := NewExtractingUserURLsHandler(mockService, getDefaultSettings())
 

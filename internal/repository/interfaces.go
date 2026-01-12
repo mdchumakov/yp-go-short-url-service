@@ -50,6 +50,7 @@ type UserRepositoryCreator interface {
 type UserRepositoryReader interface {
 	GetUserByID(ctx context.Context, userID string) (*model.UserModel, error)
 	GetUserByName(ctx context.Context, username string) (*model.UserModel, error)
+	GetUsersCount(ctx context.Context) (int64, error)
 }
 
 // UserURLsRepository определяет полный интерфейс для работы с URL пользователей в базе данных.

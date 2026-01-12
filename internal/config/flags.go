@@ -14,6 +14,7 @@ type Flags struct {
 	AuditURL        string
 	EnableHTTPS     bool
 	JSONConfigPath  string
+	TrustedSubnet   string
 }
 
 // NewFlags создает новый экземпляр флагов командной строки.
@@ -78,6 +79,12 @@ func NewFlags() *Flags {
 		"Путь до файла конфигурации.",
 	)
 
+	trustedSubnet := flag.String(
+		"t",
+		"",
+		"Доверенная подсеть для получения статистики в формате CIDR",
+	)
+
 	flag.Parse()
 
 	return &Flags{
@@ -90,5 +97,6 @@ func NewFlags() *Flags {
 		AuditURL:        *auditURL,
 		EnableHTTPS:     *enableHTTPS,
 		JSONConfigPath:  configPath,
+		TrustedSubnet:   *trustedSubnet,
 	}
 }

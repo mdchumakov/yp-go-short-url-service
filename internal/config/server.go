@@ -22,6 +22,7 @@ type ServerSettings struct {
 	BaseURL       string `envconfig:"BASE_URL" default:"" required:"false"`
 	Environment   string `envconfig:"ENVIRONMENT" default:"development" required:"false"`
 	EnableHTTPS   bool   `envconfig:"ENABLE_HTTPS" default:"false"`
+	TrustedSubnet string `envconfig:"TRUSTED_SUBNET" default:"" required:"false"`
 }
 
 // IsProd возвращает true, если текущее окружение является производственным (production).
