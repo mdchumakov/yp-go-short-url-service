@@ -1,12 +1,13 @@
 package config
 
 const (
-	defaultServerHost = "localhost"
-	defaultServerPort = 8080
-	defaultGRPCPort   = 9090
-	defaultGRPCHost   = defaultServerHost
-	defaultBaseURL    = "http://localhost:8080/"
-	defaultHTTPSUsage = false
+	defaultServerHost    = "localhost"
+	defaultServerPort    = 8080
+	defaultGRPCPort      = 9090
+	defaultGRPCHost      = defaultServerHost
+	defaultBaseURL       = "http://localhost:8080/"
+	defaultHTTPSUsage    = false
+	defaultTrustedSubnet = "0.0.0.0/0"
 )
 
 // ServerSettings содержит настройки HTTP-сервера.

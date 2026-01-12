@@ -119,29 +119,33 @@ func (s *Settings) GetServerAddress() string {
 }
 
 func (s *Settings) GetGRPCServerAddress() string {
-	// Если указана переменная окружения, то используется она
-	if serverAddr := strings.TrimSpace(s.EnvSettings.Server.GRPCAddress); serverAddr != "" {
-		return serverAddr
+	var envGRPCServerAddr, flagGRPCServerAddr, confGRPCServerAddr string
+	var envGRPCServerPort, flagGRPCServerPort, confGRPCServerPort int
+
+	if s.EnvSettings != nil {
+		if serverAddr := strings.TrimSpace(s.EnvSettings.Server.GRPCAddress); serverAddr != "" {
+			return serverAddr
+		}
+		envGRPCServerHost := strings.TrimSpace(s.EnvSettings.Server.GRPCHost)
+		envGRPCServerPort = s.EnvSettings.Server.ServerPort
+
+		if envGRPCServerHost != "" && envGRPCServerPort != 0 {
+			envGRPCServerAddr = fmt.Sprintf("%s:%d", envGRPCServerHost, envGRPCServerPort)
+		}
 	}
 
-	if strings.TrimSpace(s.EnvSettings.Server.GRPCHost) != "" &&
-		s.EnvSettings.Server.GRPCPort != 0 {
-		return fmt.Sprintf(
-			"%s:%d",
-			s.EnvSettings.Server.GRPCHost,
-			s.EnvSettings.Server.GRPCPort,
-		)
+	if s.Flags != nil {
+		flagGRPCServerAddr = strings.TrimSpace(s.Flags.GRPCAddress)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if serverAddr := strings.TrimSpace(s.Flags.GRPCAddress); serverAddr != "" {
-		return serverAddr
+	if s.JSONConfig != nil {
+		confGRPCServerAddr = strings.TrimSpace(s.JSONConfig.GRPCAddress)
 	}
 
 	return fmt.Sprintf(
 		"%s:%d",
-		lo.CoalesceOrEmpty(s.JSONConfig.GRPCAddress, defaultGRPCHost),
-		defaultGRPCPort,
+		lo.CoalesceOrEmpty(envGRPCServerAddr, flagGRPCServerAddr, confGRPCServerAddr, defaultGRPCHost),
+		lo.CoalesceOrEmpty(envGRPCServerPort, flagGRPCServerPort, confGRPCServerPort, defaultGRPCPort),
 	)
 }
 

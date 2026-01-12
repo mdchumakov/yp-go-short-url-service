@@ -6,7 +6,9 @@ import (
 	"net"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
+	pb "yp-go-short-url-service/internal/generated/api/proto"
 	"yp-go-short-url-service/internal/handler"
+	grpcImpl "yp-go-short-url-service/internal/handler/grpc"
 	"yp-go-short-url-service/internal/handler/health"
 	statsHandler "yp-go-short-url-service/internal/handler/stats"
 	urlsDestructorAPIHandler "yp-go-short-url-service/internal/handler/urls/destructor"
@@ -19,6 +21,7 @@ import (
 	"yp-go-short-url-service/internal/observer/base"
 
 	"yp-go-short-url-service/internal/middleware"
+	grpcMiddleware "yp-go-short-url-service/internal/middleware/grpc"
 	"yp-go-short-url-service/internal/middleware/gzip"
 	baseRepo "yp-go-short-url-service/internal/repository/base"
 	"yp-go-short-url-service/internal/service"
@@ -41,6 +44,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // App представляет основное приложение сервиса сокращения URL.
@@ -123,8 +127,21 @@ func NewApp(logger *zap.SugaredLogger, ctx context.Context) (*App, error) {
 	HealthHandler := health.NewPingHandler(pingService)
 	StatsHandler := statsHandler.New(StatsService, settings.GetTrustedSubnet())
 
+	// Создаем и настраиваем gRPC сервер
+	grpcServer := createGRPCServer(JWTService, AuthService, logger)
+	grpcShortenerImpl := grpcImpl.NewRPCService(URLShortenerService, URLExtractorService, settings)
+
+	// Регистрируем gRPC сервис
+	pb.RegisterShortenerServiceServer(grpcServer, grpcShortenerImpl)
+
+	// Включаем reflection для grpcurl и других инструментов (только для dev)
+	if !settings.EnvSettings.Server.IsProd() {
+		reflection.Register(grpcServer)
+	}
+
 	return &App{
 		router:                    router,
+		grpcServer:                grpcServer,
 		shortLinksHandler:         URLShortenerHandler,
 		shortLinksHandlerAPI:      URLShortenerAPIHandler,
 		shortLinksBatchHandlerAPI: URLShortenerBatchAPIHandler,
@@ -230,8 +247,21 @@ func (a *App) RunGRPC() error {
 	return nil
 }
 
-func (a *App) createGRPCServer() *grpc.Server {
-	return grpc.NewServer()
+func createGRPCServer(
+	jwtService service.JWTService,
+	authService service.AuthService,
+	logger *zap.SugaredLogger,
+) *grpc.Server {
+	publicInterceptor := grpcMiddleware.JWTAuthInterceptor(
+		jwtService,
+		authService,
+		true, // isAnonAllowed
+		logger,
+	)
+
+	chain := grpc.ChainUnaryInterceptor(publicInterceptor)
+
+	return grpc.NewServer(chain)
 }
 
 // setupPprofRoutes настраивает роуты для pprof профилирования
