@@ -36,11 +36,13 @@ type ENVSettings struct {
 // Включает настройки сервера, базы данных, файлового хранилища, аудита и JWT.
 type SettingsFromJSON struct {
 	ServerAddress   string `json:"server_address"`
+	GRPCAddress     string `json:"grpc_address"`
 	BaseURL         string `json:"base_url"`
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
 	AuditFilePath   string `json:"audit_file_path"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // NewSettings создает новый экземпляр настроек приложения.
@@ -93,124 +95,204 @@ func NewENVSettings() *ENVSettings {
 // GetServerAddress возвращает адрес сервера для запуска HTTP-сервера.
 // Приоритет: переменная окружения > флаг командной строки > значения по умолчанию.
 func (s *Settings) GetServerAddress() string {
-	// Если указана переменная окружения, то используется она
-	if serverAddr := strings.TrimSpace(s.EnvSettings.Server.ServerAddress); serverAddr != "" {
-		return serverAddr
-	}
-	if strings.TrimSpace(s.EnvSettings.Server.ServerHost) != "" &&
-		s.EnvSettings.Server.ServerPort != 0 {
-		return fmt.Sprintf(
-			"%s:%d",
-			s.EnvSettings.Server.ServerHost,
-			s.EnvSettings.Server.ServerPort,
-		)
+	var envServerAddr, flagServerAddr, confServerAddr string
+	var envServerPort, flagServerPort, confServerPort int
+
+	if s.EnvSettings != nil {
+		envServerAddr = strings.TrimSpace(s.EnvSettings.Server.ServerAddress)
+		envServerPort = s.EnvSettings.Server.ServerPort
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if serverAddr := strings.TrimSpace(s.Flags.ServerAddress); serverAddr != "" {
-		return serverAddr
+	if s.Flags != nil {
+		flagServerAddr = strings.TrimSpace(s.Flags.ServerAddress)
+	}
+
+	if s.JSONConfig != nil {
+		confServerAddr = strings.TrimSpace(s.JSONConfig.ServerAddress)
 	}
 
 	return fmt.Sprintf(
 		"%s:%d",
-		lo.CoalesceOrEmpty(s.JSONConfig.ServerAddress, defaultServerHost),
-		defaultServerPort,
+		lo.CoalesceOrEmpty(envServerAddr, flagServerAddr, confServerAddr, defaultServerHost),
+		lo.CoalesceOrEmpty(envServerPort, flagServerPort, confServerPort, defaultServerPort),
+	)
+}
+
+func (s *Settings) GetGRPCServerAddress() string {
+	var envGRPCServerAddr, flagGRPCServerAddr, confGRPCServerAddr string
+	var envGRPCServerPort, flagGRPCServerPort, confGRPCServerPort int
+
+	if s.EnvSettings != nil {
+		if serverAddr := strings.TrimSpace(s.EnvSettings.Server.GRPCAddress); serverAddr != "" {
+			return serverAddr
+		}
+		envGRPCServerHost := strings.TrimSpace(s.EnvSettings.Server.GRPCHost)
+		envGRPCServerPort = s.EnvSettings.Server.ServerPort
+
+		if envGRPCServerHost != "" && envGRPCServerPort != 0 {
+			envGRPCServerAddr = fmt.Sprintf("%s:%d", envGRPCServerHost, envGRPCServerPort)
+		}
+	}
+
+	if s.Flags != nil {
+		flagGRPCServerAddr = strings.TrimSpace(s.Flags.GRPCAddress)
+	}
+
+	if s.JSONConfig != nil {
+		confGRPCServerAddr = strings.TrimSpace(s.JSONConfig.GRPCAddress)
+	}
+
+	return fmt.Sprintf(
+		"%s:%d",
+		lo.CoalesceOrEmpty(envGRPCServerAddr, flagGRPCServerAddr, confGRPCServerAddr, defaultGRPCHost),
+		lo.CoalesceOrEmpty(envGRPCServerPort, flagGRPCServerPort, confGRPCServerPort, defaultGRPCPort),
 	)
 }
 
 // GetBaseURL возвращает базовый URL для генерации коротких ссылок.
 // Приоритет: переменная окружения > флаг командной строки > значение по умолчанию.
 func (s *Settings) GetBaseURL() string {
-	// Если указана переменная окружения, то используется она
-	if baseURL := strings.TrimSpace(s.EnvSettings.Server.BaseURL); baseURL != "" {
-		return baseURL
+	var envBaseURL, flagBaseURL, confBaseURL string
+
+	if s.EnvSettings != nil {
+		envBaseURL = strings.TrimSpace(s.EnvSettings.Server.BaseURL)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if baseURL := strings.TrimSpace(s.Flags.BaseURL); baseURL != "" {
-		return baseURL
+	if s.Flags != nil {
+		flagBaseURL = strings.TrimSpace(s.Flags.BaseURL)
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.BaseURL, defaultBaseURL)
+	if s.JSONConfig != nil {
+		confBaseURL = strings.TrimSpace(s.JSONConfig.BaseURL)
+	}
+
+	return lo.CoalesceOrEmpty(
+		envBaseURL,
+		flagBaseURL,
+		confBaseURL,
+		defaultBaseURL,
+	)
 }
 
 // GetFileStoragePath возвращает путь к файлу для хранения данных в формате JSON.
 // Приоритет: переменная окружения > флаг командной строки > значение по умолчанию.
 func (s *Settings) GetFileStoragePath() string {
-	// Если указана переменная окружения, то используется она
-	if fileStoragePath := strings.TrimSpace(s.EnvSettings.FileStorage.Path); fileStoragePath != "" {
-		return fileStoragePath
+	var envFileStoragePath, flagFileStoragePath, confFileStoragePath string
+
+	if s.EnvSettings != nil {
+		envFileStoragePath = strings.TrimSpace(s.EnvSettings.FileStorage.Path)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if fileStoragePath := strings.TrimSpace(s.Flags.FileStoragePath); fileStoragePath != "" {
-		return fileStoragePath
+	if s.Flags != nil {
+		flagFileStoragePath = strings.TrimSpace(s.Flags.FileStoragePath)
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.FileStoragePath, db.DefaultFileStoragePath)
+	if s.JSONConfig != nil {
+		confFileStoragePath = strings.TrimSpace(s.JSONConfig.FileStoragePath)
+	}
+
+	return lo.CoalesceOrEmpty(
+		envFileStoragePath,
+		flagFileStoragePath,
+		confFileStoragePath,
+		db.DefaultFileStoragePath,
+	)
 }
 
 // GetPostgresDSN возвращает строку подключения к PostgreSQL базе данных.
 // Приоритет: переменная окружения > флаг командной строки > значение по умолчанию.
 func (s *Settings) GetPostgresDSN() string {
-	// Если указана переменная окружения, то используется она
-	if dsn := strings.TrimSpace(s.EnvSettings.PG.DSN); dsn != "" {
-		return dsn
+	var envDSN, flagDSN, confDSN string
+
+	if s.EnvSettings != nil {
+		envDSN = strings.TrimSpace(s.EnvSettings.PG.DSN)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if dsn := strings.TrimSpace(s.Flags.DatabaseDSN); dsn != "" {
-		return dsn
+	if s.Flags != nil {
+		flagDSN = strings.TrimSpace(s.Flags.DatabaseDSN)
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.DatabaseDSN, db.DefaultPostgresDSN)
+	if s.JSONConfig != nil {
+		confDSN = strings.TrimSpace(s.JSONConfig.DatabaseDSN)
+	}
+
+	return lo.CoalesceOrEmpty(envDSN, flagDSN, confDSN, db.DefaultPostgresDSN)
 }
 
 // GetAuditFilePath возвращает путь к файлу для сохранения логов аудита.
 // Приоритет: переменная окружения > флаг командной строки > пустая строка (аудит отключен).
 func (s *Settings) GetAuditFilePath() string {
-	// Если указана переменная окружения, то используется она
-	if auditFilePath := strings.TrimSpace(s.EnvSettings.Audit.File); auditFilePath != "" {
-		return auditFilePath
+	var envAuditPath, flagAuditPath, confAuditPath string
+
+	if s.EnvSettings != nil {
+		envAuditPath = strings.TrimSpace(s.EnvSettings.Audit.File)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if auditFilePath := strings.TrimSpace(s.Flags.AuditFile); auditFilePath != "" {
-		return auditFilePath
+	if s.Flags != nil {
+		flagAuditPath = strings.TrimSpace(s.Flags.AuditFile)
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.AuditFilePath, defaultAuditFilePath)
+	if s.JSONConfig != nil {
+		confAuditPath = strings.TrimSpace(s.JSONConfig.AuditFilePath)
+	}
+	return lo.CoalesceOrEmpty(envAuditPath, flagAuditPath, confAuditPath, defaultAuditFilePath)
 }
 
 // GetAuditURL возвращает URL удаленного сервера для отправки логов аудита.
 // Приоритет: переменная окружения > флаг командной строки > пустая строка (аудит отключен).
 func (s *Settings) GetAuditURL() string {
-	// Если указана переменная окружения, то используется она
-	if auditURL := strings.TrimSpace(s.EnvSettings.Audit.URL); auditURL != "" {
-		return auditURL
+	var envAuditURL, flagAuditURL, confAuditURL string
+
+	if s.EnvSettings != nil {
+		envAuditURL = strings.TrimSpace(s.EnvSettings.Audit.URL)
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if auditURL := strings.TrimSpace(s.Flags.AuditURL); auditURL != "" {
-		return auditURL
+	if s.Flags != nil {
+		flagAuditURL = strings.TrimSpace(s.Flags.AuditURL)
 	}
 
-	// Если параметр не передан, аудит на удалённый сервер должен быть отключён.
-	return defaultAuditURL
+	return lo.CoalesceOrEmpty(envAuditURL, flagAuditURL, confAuditURL, defaultAuditURL)
 }
 
 // IsHTTPSEnabled возвращает true, если HTTPS включен в настройках.
 // Приоритет: переменная окружения > флаг командной строки > значение по умолчанию (false).
 func (s *Settings) IsHTTPSEnabled() bool {
-	// Если указана переменная окружения, то используется она
-	if enableHTTPS := s.EnvSettings.Server.EnableHTTPS; enableHTTPS {
-		return enableHTTPS
+	var envEnableHTTPS, flagEnableHTTPS, confEnableHTTPS bool
+
+	if s.EnvSettings != nil {
+		envEnableHTTPS = s.EnvSettings.Server.EnableHTTPS
 	}
 
-	// Если нет переменной окружения, но есть аргумент командной строки(флаг), то используется он
-	if enableHTTPS := s.Flags.EnableHTTPS; enableHTTPS {
-		return enableHTTPS
+	if s.Flags != nil {
+		flagEnableHTTPS = s.Flags.EnableHTTPS
 	}
 
-	return lo.CoalesceOrEmpty(s.JSONConfig.EnableHTTPS, defaultHTTPSUsage)
+	if s.JSONConfig != nil {
+		confEnableHTTPS = s.JSONConfig.EnableHTTPS
+	}
+
+	return lo.CoalesceOrEmpty(envEnableHTTPS, flagEnableHTTPS, confEnableHTTPS, defaultHTTPSUsage)
+}
+
+func (s *Settings) GetTrustedSubnet() string {
+	var envTrustedSubnet, flagTrustedSubnet, confTrustedSubnet string
+
+	if s.EnvSettings != nil {
+		envTrustedSubnet = strings.TrimSpace(s.EnvSettings.Server.TrustedSubnet)
+	}
+
+	if s.Flags != nil {
+		flagTrustedSubnet = strings.TrimSpace(s.Flags.TrustedSubnet)
+	}
+
+	if s.JSONConfig != nil {
+		confTrustedSubnet = strings.TrimSpace(s.JSONConfig.TrustedSubnet)
+	}
+
+	return lo.CoalesceOrEmpty(
+		envTrustedSubnet,
+		flagTrustedSubnet,
+		confTrustedSubnet,
+		defaultTrustedSubnet,
+	)
 }

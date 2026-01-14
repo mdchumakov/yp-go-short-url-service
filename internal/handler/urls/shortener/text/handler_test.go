@@ -15,8 +15,8 @@ import (
 	"yp-go-short-url-service/internal/service/mock"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 )
 
@@ -40,10 +40,10 @@ func getDefaultSettings() *config.Settings {
 	}
 }
 
-func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockLinkShortenerService, *config.Settings) {
+func setupTestHandler(t *testing.T) (*gin.Engine, *mock.MockURLShortenerService, *config.Settings) {
 	gin.SetMode(gin.TestMode)
 	ctrl := gomock.NewController(t)
-	mockService := mock.NewMockLinkShortenerService(ctrl)
+	mockService := mock.NewMockURLShortenerService(ctrl)
 	settings := getDefaultSettings()
 
 	handler := NewCreatingShortLinksHandler(mockService, settings)
@@ -79,7 +79,7 @@ func TestNewCreatingShortLinksHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mock.NewMockLinkShortenerService(ctrl)
+	mockService := mock.NewMockURLShortenerService(ctrl)
 	settings := getDefaultSettings()
 
 	handler := NewCreatingShortLinksHandler(mockService, settings)

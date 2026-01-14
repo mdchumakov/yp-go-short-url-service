@@ -40,19 +40,26 @@ func main() {
 	}
 	defer config.SyncLogger(logger)
 
-	service, err := app.NewApp(logger, ctx)
+	server, err := app.NewApp(logger, ctx)
 	if err != nil {
 		logger.Errorw("Failed to initialize application", "error", err)
 		os.Exit(1)
 	}
 
-	service.SetupCommonMiddlewares()
-	service.SetupRoutes()
+	server.SetupCommonMiddlewares()
+	server.SetupRoutes()
 
 	// Запускаем сервер в горутине
 	go func() {
-		if err := service.Run(); err != nil {
+		if err := server.Run(); err != nil {
 			logger.Fatal(err)
+		}
+	}()
+
+	// Запускаем gRPC сервер в горутине
+	go func() {
+		if err := server.RunGRPC(); err != nil {
+			logger.Fatalw("gRPC server failed", "error", err)
 		}
 	}()
 
@@ -61,7 +68,7 @@ func main() {
 	logger.Info("Received shutdown signal")
 
 	// Корректно останавливаем приложение
-	service.Stop()
+	server.Stop()
 }
 
 func printMetaInfo() {

@@ -66,6 +66,11 @@ type MockAuthService struct {
 	mock.Mock
 }
 
+func (m *MockAuthService) GetUsersCount(ctx context.Context) (int64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *MockAuthService) CreateUser(ctx context.Context, username, password string) (*model.UserModel, error) {
 	args := m.Called(ctx, username, password)
 	if args.Get(0) == nil {

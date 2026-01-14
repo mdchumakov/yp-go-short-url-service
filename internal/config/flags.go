@@ -6,6 +6,7 @@ import "flag"
 // Позволяет переопределить настройки из переменных окружения через аргументы командной строки.
 type Flags struct {
 	ServerAddress   string
+	GRPCAddress     string
 	BaseURL         string
 	FileStoragePath string
 	DatabaseDSN     string
@@ -13,6 +14,7 @@ type Flags struct {
 	AuditURL        string
 	EnableHTTPS     bool
 	JSONConfigPath  string
+	TrustedSubnet   string
 }
 
 // NewFlags создает новый экземпляр флагов командной строки.
@@ -22,6 +24,11 @@ func NewFlags() *Flags {
 		"a",
 		"",
 		"Отвечает за адрес запуска HTTP-сервера (значение может быть таким: localhost:8888)",
+	)
+	grpcAddr := flag.String(
+		"g",
+		"",
+		"Отвечает за адрес запуска gRPC-сервера (значение может быть таким: localhost:9090)",
 	)
 	redirectURL := flag.String(
 		"b",
@@ -72,10 +79,17 @@ func NewFlags() *Flags {
 		"Путь до файла конфигурации.",
 	)
 
+	trustedSubnet := flag.String(
+		"t",
+		"",
+		"Доверенная подсеть для получения статистики в формате CIDR",
+	)
+
 	flag.Parse()
 
 	return &Flags{
 		ServerAddress:   *connectionAddr,
+		GRPCAddress:     *grpcAddr,
 		BaseURL:         *redirectURL,
 		FileStoragePath: *fileStoragePath,
 		DatabaseDSN:     *databaseDSN,
@@ -83,5 +97,6 @@ func NewFlags() *Flags {
 		AuditURL:        *auditURL,
 		EnableHTTPS:     *enableHTTPS,
 		JSONConfigPath:  configPath,
+		TrustedSubnet:   *trustedSubnet,
 	}
 }

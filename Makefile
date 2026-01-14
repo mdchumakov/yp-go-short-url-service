@@ -144,6 +144,29 @@ migrate-create:
 		exit 1; \
 	fi
 
+
+# Генерация кода из proto файлов
+proto:
+	@echo "Генерация кода из proto файлов..."
+	@if ! command -v protoc > /dev/null; then \
+		echo "Ошибка: protoc не найден. Установите его: brew install protobuf"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(shell go env GOPATH)/bin/protoc-gen-go" ]; then \
+		echo "Установка protoc-gen-go..."; \
+		go install google.golang.org/protobuf/cmd/protoc-gen-go@latest; \
+	fi
+	@if [ ! -f "$(shell go env GOPATH)/bin/protoc-gen-go-grpc" ]; then \
+		echo "Установка protoc-gen-go-grpc..."; \
+		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest; \
+	fi
+	protoc \
+		--go_out=internal/generated \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=internal/generated \
+		--go-grpc_opt=paths=source_relative \
+		api/proto/shortener.proto
+
 # Помощь
 help:
 	@echo "Доступные команды:"

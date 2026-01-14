@@ -3,10 +3,14 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
 	"yp-go-short-url-service/internal/config"
 	"yp-go-short-url-service/internal/config/db"
+	pb "yp-go-short-url-service/internal/generated/api/proto"
 	"yp-go-short-url-service/internal/handler"
+	grpcImpl "yp-go-short-url-service/internal/handler/grpc"
 	"yp-go-short-url-service/internal/handler/health"
+	statsHandler "yp-go-short-url-service/internal/handler/stats"
 	urlsDestructorAPIHandler "yp-go-short-url-service/internal/handler/urls/destructor"
 	urlExtractorHandler "yp-go-short-url-service/internal/handler/urls/extractor"
 	userURLsHandler "yp-go-short-url-service/internal/handler/urls/extractor/user"
@@ -17,6 +21,7 @@ import (
 	"yp-go-short-url-service/internal/observer/base"
 
 	"yp-go-short-url-service/internal/middleware"
+	grpcMiddleware "yp-go-short-url-service/internal/middleware/grpc"
 	"yp-go-short-url-service/internal/middleware/gzip"
 	baseRepo "yp-go-short-url-service/internal/repository/base"
 	"yp-go-short-url-service/internal/service"
@@ -24,6 +29,7 @@ import (
 	healthService "yp-go-short-url-service/internal/service/health"
 	initService "yp-go-short-url-service/internal/service/init"
 	jwtService "yp-go-short-url-service/internal/service/jwt"
+	statsService "yp-go-short-url-service/internal/service/stats"
 	urlDestructorService "yp-go-short-url-service/internal/service/urls/destructor"
 	urlExtractorService "yp-go-short-url-service/internal/service/urls/extractor"
 	urlShortenerService "yp-go-short-url-service/internal/service/urls/shortener"
@@ -37,12 +43,15 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 // App представляет основное приложение сервиса сокращения URL.
 // Содержит роутер, обработчики запросов, сервисы и настройки.
 type App struct {
 	router                    *gin.Engine
+	grpcServer                *grpc.Server
 	shortLinksHandler         handler.Handler
 	shortLinksHandlerAPI      handler.Handler
 	shortLinksBatchHandlerAPI handler.Handler
@@ -50,6 +59,7 @@ type App struct {
 	fullLinkHandler           handler.Handler
 	userURLsHandler           handler.Handler
 	pingHandler               handler.Handler
+	statsHandler              handler.Handler
 	services                  Services
 	settings                  *config.Settings
 	logger                    *zap.SugaredLogger
@@ -106,6 +116,7 @@ func NewApp(logger *zap.SugaredLogger, ctx context.Context) (*App, error) {
 	URLShortenerService := urlShortenerService.NewURLShortenerService(repoURLs, userURLsRepo, auditEventBus)
 	URLExtractorService := urlExtractorService.NewLinkExtractorService(repoURLs, userURLsRepo, auditEventBus)
 	URLDestructorService := urlDestructorService.NewURLDestructorService(repoURLs, userURLsRepo)
+	StatsService := statsService.New(userRepo, repoURLs)
 
 	URLExtractorHandler := urlExtractorHandler.NewExtractingFullLinkHandler(URLExtractorService)
 	UserURLsHandler := userURLsHandler.NewExtractingUserURLsHandler(URLExtractorService, settings)
@@ -114,9 +125,23 @@ func NewApp(logger *zap.SugaredLogger, ctx context.Context) (*App, error) {
 	URLShortenerBatchAPIHandler := shortenBatchAPI.NewCreatingShortURLsByBatchAPIHandler(URLShortenerService, settings)
 	URLDestructorAPIHandler := urlsDestructorAPIHandler.NewUsersURLsDestructorAPIHandler(URLDestructorService)
 	HealthHandler := health.NewPingHandler(pingService)
+	StatsHandler := statsHandler.New(StatsService, settings.GetTrustedSubnet())
+
+	// Создаем и настраиваем gRPC сервер
+	grpcServer := createGRPCServer(JWTService, AuthService, logger)
+	grpcShortenerImpl := grpcImpl.NewRPCService(URLShortenerService, URLExtractorService, settings)
+
+	// Регистрируем gRPC сервис
+	pb.RegisterShortenerServiceServer(grpcServer, grpcShortenerImpl)
+
+	// Включаем reflection для grpcurl и других инструментов (только для dev)
+	if !settings.EnvSettings.Server.IsProd() {
+		reflection.Register(grpcServer)
+	}
 
 	return &App{
 		router:                    router,
+		grpcServer:                grpcServer,
 		shortLinksHandler:         URLShortenerHandler,
 		shortLinksHandlerAPI:      URLShortenerAPIHandler,
 		shortLinksBatchHandlerAPI: URLShortenerBatchAPIHandler,
@@ -124,6 +149,7 @@ func NewApp(logger *zap.SugaredLogger, ctx context.Context) (*App, error) {
 		fullLinkHandler:           URLExtractorHandler,
 		userURLsHandler:           UserURLsHandler,
 		pingHandler:               HealthHandler,
+		statsHandler:              StatsHandler,
 		services: Services{
 			auth:          AuthService,
 			jwt:           JWTService,
@@ -149,6 +175,11 @@ func (a *App) SetupCommonMiddlewares() {
 // Создает публичные и приватные группы маршрутов с соответствующими middleware.
 // Настраивает маршруты для сокращения URL, получения URL, удаления URL и health check.
 func (a *App) SetupRoutes() {
+	internalMiddleware := middleware.NewInternalMiddleware(
+		a.logger,
+		a.settings.GetTrustedSubnet(),
+	).InternalMiddlewareHandler()
+
 	anonAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, true, a.logger)
 	anonNotAllowedMiddleware := middleware.JWTAuthMiddleware(a.services.jwt, a.services.auth, a.settings.EnvSettings.JWT, false, a.logger)
 
@@ -159,6 +190,12 @@ func (a *App) SetupRoutes() {
 		publicGroup.POST("/", a.shortLinksHandler.Handle)
 		publicGroup.POST("/api/shorten", a.shortLinksHandlerAPI.Handle)
 		publicGroup.POST("/api/shorten/batch", a.shortLinksBatchHandlerAPI.Handle)
+	}
+
+	internalGroup := publicGroup.Group("/api/internal")
+	internalGroup.Use(internalMiddleware)
+	{
+		internalGroup.GET("/stats", a.statsHandler.Handle)
 	}
 
 	privateGroup := a.router.Group("/")
@@ -194,6 +231,39 @@ func (a *App) Run() error {
 	return err
 }
 
+func (a *App) RunGRPC() error {
+	grpcAddr := a.settings.GetGRPCServerAddress()
+	a.logger.Infof("Starting gRPC server at %s", grpcAddr)
+
+	lis, err := net.Listen("tcp", grpcAddr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %w", grpcAddr, err)
+	}
+
+	if err := a.grpcServer.Serve(lis); err != nil {
+		return fmt.Errorf("failed to serve gRPC: %w", err)
+	}
+
+	return nil
+}
+
+func createGRPCServer(
+	jwtService service.JWTService,
+	authService service.AuthService,
+	logger *zap.SugaredLogger,
+) *grpc.Server {
+	publicInterceptor := grpcMiddleware.JWTAuthInterceptor(
+		jwtService,
+		authService,
+		true, // isAnonAllowed
+		logger,
+	)
+
+	chain := grpc.ChainUnaryInterceptor(publicInterceptor)
+
+	return grpc.NewServer(chain)
+}
+
 // setupPprofRoutes настраивает роуты для pprof профилирования
 func (a *App) setupPprofRoutes() {
 	pprofGroup := a.router.Group("/debug/pprof")
@@ -215,6 +285,13 @@ func (a *App) setupPprofRoutes() {
 // Останавливает все фоновые сервисы (например, сервис удаления URL) и завершает работу приложения.
 func (a *App) Stop() {
 	a.logger.Info("Stopping application...")
+
+	// Graceful shutdown gRPC сервера
+	if a.grpcServer != nil {
+		a.logger.Info("Stopping gRPC server...")
+		a.grpcServer.GracefulStop()
+	}
+
 	if a.services.urlDestructor != nil {
 		a.services.urlDestructor.Stop()
 	}

@@ -363,6 +363,21 @@ func (mr *MockUserRepositoryMockRecorder) GetUserByName(ctx, username any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockUserRepository)(nil).GetUserByName), ctx, username)
 }
 
+// GetUsersCount mocks base method.
+func (m *MockUserRepository) GetUsersCount(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersCount", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersCount indicates an expected call of GetUsersCount.
+func (mr *MockUserRepositoryMockRecorder) GetUsersCount(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersCount", reflect.TypeOf((*MockUserRepository)(nil).GetUsersCount), ctx)
+}
+
 // MockUserRepositoryCreator is a mock of UserRepositoryCreator interface.
 type MockUserRepositoryCreator struct {
 	ctrl     *gomock.Controller
@@ -454,6 +469,21 @@ func (m *MockUserRepositoryReader) GetUserByName(ctx context.Context, username s
 func (mr *MockUserRepositoryReaderMockRecorder) GetUserByName(ctx, username any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByName", reflect.TypeOf((*MockUserRepositoryReader)(nil).GetUserByName), ctx, username)
+}
+
+// GetUsersCount mocks base method.
+func (m *MockUserRepositoryReader) GetUsersCount(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersCount", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersCount indicates an expected call of GetUsersCount.
+func (mr *MockUserRepositoryReaderMockRecorder) GetUsersCount(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersCount", reflect.TypeOf((*MockUserRepositoryReader)(nil).GetUsersCount), ctx)
 }
 
 // MockUserURLsRepository is a mock of UserURLsRepository interface.

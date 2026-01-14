@@ -1,0 +1,58 @@
+edition = "2024";
+
+package shortener;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "yp-go-short-url-service/api/proto/shortener";
+option features.field_presence = IMPLICIT;
+
+// Сервис для работы с короткими URL
+service ShortenerService {
+  // Создать короткую ссылку
+  rpc ShortenURL (URLShortenRequest) returns (URLShortenResponse);
+
+  // Получить длинный URL по короткому
+  rpc ExpandURL (URLExpandRequest) returns (URLExpandResponse);
+
+  // Получить все URL пользователя
+  rpc ListUserURLs (google.protobuf.Empty) returns (UserURLsResponse);
+}
+
+// Запрос на создание короткой ссылки
+message URLShortenRequest {
+  string url = 1;  // Длинный URL для сокращения
+}
+
+// Ответ с короткой ссылкой
+message URLShortenResponse {
+  string result = 1; // Полный URL короткой ссылки
+  int32 status_code = 2; // HTTP статус код (201, 409, 500)
+  string error = 3 [features.field_presence = EXPLICIT];; // Сообщение об ошибке (если есть)
+}
+
+// Запрос на извлечение длинного URL
+message URLExpandRequest {
+  string id = 1; // Короткий идентификатор URL
+}
+
+// Ответ с длинным URL
+message URLExpandResponse {
+  string result = 1; // Длинный URL
+  int32 status_code = 2; // HTTP статус код (307, 400, 410, 500)
+  string error = 3 [features.field_presence = EXPLICIT]; // Сообщение об ошибке (если есть)
+}
+
+
+// Представление URL пользователя
+message UserURLsResponse {
+  repeated URLData url = 1; // Представление URL пользователя
+  int32 status_code = 2; // HTTP статус код (200, 204, 401, 500)
+  string error = 3 [features.field_presence = EXPLICIT];; // Сообщение об ошибке (если есть)
+}
+
+// Представление URL пользователя
+message URLData {
+  string short_url = 1; // Полный URL короткой ссылки
+  string original_url = 2; // Оригинальный длинный URL
+}

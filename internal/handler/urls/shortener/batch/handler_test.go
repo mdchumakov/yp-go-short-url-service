@@ -12,9 +12,9 @@ import (
 	"yp-go-short-url-service/internal/service/mock"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
@@ -25,7 +25,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 		requestBody    string
 		contentType    string
 		baseURL        string
-		mockSetup      func(*mock.MockLinkShortenerService)
+		mockSetup      func(*mock.MockURLShortenerService)
 		expectedStatus int
 		expectedBody   string
 	}{
@@ -43,7 +43,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			]`,
 			contentType: "application/json",
 			baseURL:     "http://localhost:8080",
-			mockSetup: func(mockService *mock.MockLinkShortenerService) {
+			mockSetup: func(mockService *mock.MockURLShortenerService) {
 				expectedInput := []map[string]string{
 					{"correlation_id": "1", "original_url": "https://example.com/very-long-url-1"},
 					{"correlation_id": "2", "original_url": "https://example.com/very-long-url-2"},
@@ -72,7 +72,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			requestBody:    `[]`,
 			contentType:    "",
 			baseURL:        "http://localhost:8080",
-			mockSetup:      func(mockService *mock.MockLinkShortenerService) {},
+			mockSetup:      func(mockService *mock.MockURLShortenerService) {},
 			expectedStatus: http.StatusUnsupportedMediaType,
 			expectedBody:   `{"message":"Content-type header is required"}`,
 		},
@@ -81,7 +81,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			requestBody:    `[]`,
 			contentType:    "text/plain",
 			baseURL:        "http://localhost:8080",
-			mockSetup:      func(mockService *mock.MockLinkShortenerService) {},
+			mockSetup:      func(mockService *mock.MockURLShortenerService) {},
 			expectedStatus: http.StatusUnsupportedMediaType,
 			expectedBody:   `{"message":"Content-type: ` + "`" + `application/json` + "`" + ` header is required"}`,
 		},
@@ -90,7 +90,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			requestBody:    `[{"correlation_id": "1", "original_url": "https://example.com"}`,
 			contentType:    "application/json",
 			baseURL:        "http://localhost:8080",
-			mockSetup:      func(mockService *mock.MockLinkShortenerService) {},
+			mockSetup:      func(mockService *mock.MockURLShortenerService) {},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   `{"error":"unexpected EOF"}`,
 		},
@@ -99,7 +99,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			requestBody:    `[]`,
 			contentType:    "application/json",
 			baseURL:        "http://localhost:8080",
-			mockSetup:      func(mockService *mock.MockLinkShortenerService) {},
+			mockSetup:      func(mockService *mock.MockURLShortenerService) {},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   `{"error":"urls array is empty"}`,
 		},
@@ -113,7 +113,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			]`,
 			contentType: "application/json",
 			baseURL:     "http://localhost:8080",
-			mockSetup: func(mockService *mock.MockLinkShortenerService) {
+			mockSetup: func(mockService *mock.MockURLShortenerService) {
 				expectedInput := []map[string]string{
 					{"correlation_id": "1", "original_url": "https://example.com/very-long-url-1"},
 				}
@@ -131,7 +131,7 @@ func TestCreatingShortURLsByBatchAPIHandler_Handle(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockService := mock.NewMockLinkShortenerService(ctrl)
+			mockService := mock.NewMockURLShortenerService(ctrl)
 			tt.mockSetup(mockService)
 
 			// Создаем мок настроек для тестов
